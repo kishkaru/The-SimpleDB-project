@@ -16,12 +16,14 @@ import java.util.*;
 
 public class Catalog {
 
+    private HashMap<Integer,ArrayList<Object>> theMap;
+
     /**
      * Constructor.
      * Creates a new, empty catalog.
      */
     public Catalog() {
-        // some code goes here
+        theMap = new HashMap<Integer, ArrayList<Object>>();
     }
 
     /**
@@ -30,11 +32,29 @@ public class Catalog {
      * @param file the contents of the table to add;  file.getId() is the identfier of
      *    this file/tupledesc param for the calls getTupleDesc and getFile
      * @param name the name of the table -- may be an empty string.  May not be null.  If a name
+     *    conflict exists, use the last table to be added as the table for a given name.
      * @param pkeyField the name of the primary key field
-     * conflict exists, use the last table to be added as the table for a given name.
      */
     public void addTable(DbFile file, String name, String pkeyField) {
-        // some code goes here
+        if(name == null)
+            throw new IllegalArgumentException(name);
+        else{
+            ArrayList<Object> theList = new ArrayList<Object>();
+            theList.add(file);
+            theList.add(name);
+            theList.add(pkeyField);
+
+//            Iterator<ArrayList<Object>> theIterator = theMap.values().iterator();
+//            while(theIterator.hasNext()){
+//                ArrayList aList = theIterator.next();
+//                if(aList.get(1).equals(name)){
+//                    theMap.remove( ((DbFile)aList.get(0)).getId());
+//                    break;
+//                }
+//            }
+
+            theMap.put(file.getId(), theList);
+        }
     }
 
     public void addTable(DbFile file, String name) {
@@ -57,8 +77,15 @@ public class Catalog {
      * @throws NoSuchElementException if the table doesn't exist
      */
     public int getTableId(String name) throws NoSuchElementException {
-        // some code goes here
-        return 0;
+        Iterator<ArrayList<Object>> theIterator = theMap.values().iterator();
+
+        while(theIterator.hasNext()){
+            ArrayList aList = theIterator.next();
+            if(aList.get(1).equals(name))
+                return ((DbFile) aList.get(0)).getId();
+        }
+
+        throw new NoSuchElementException(name);
     }
 
     /**
@@ -68,8 +95,12 @@ public class Catalog {
      * @throws NoSuchElementException if the table doesn't exist
      */
     public TupleDesc getTupleDesc(int tableid) throws NoSuchElementException {
-        // some code goes here
-        return null;
+        ArrayList aList = theMap.get(new Integer(tableid));
+        if(aList == null)
+            throw new NoSuchElementException(String.valueOf(tableid));
+
+        DbFile theFile = (DbFile) aList.get(0);
+        return theFile.getTupleDesc();
     }
 
     /**
@@ -79,28 +110,36 @@ public class Catalog {
      *     function passed to addTable
      */
     public DbFile getDbFile(int tableid) throws NoSuchElementException {
-        // some code goes here
-        return null;
+        ArrayList aList = theMap.get(new Integer(tableid));
+        if(aList == null)
+            throw new NoSuchElementException(String.valueOf(tableid));
+
+        return (DbFile) aList.get(0);
     }
 
     public String getPrimaryKey(int tableid) {
-        // some code goes here
-        return null;
+        ArrayList aList = theMap.get(new Integer(tableid));
+        if(aList == null)
+            throw new NoSuchElementException(String.valueOf(tableid));
+
+        return (String) aList.get(2);
     }
 
     public Iterator<Integer> tableIdIterator() {
-        // some code goes here
-        return null;
+        return theMap.keySet().iterator();
     }
 
     public String getTableName(int id) {
-        // some code goes here
-        return null;
+        ArrayList aList = theMap.get(new Integer(id));
+        if(aList == null)
+            throw new NoSuchElementException(String.valueOf(id));
+
+        return (String) aList.get(1);
     }
     
     /** Delete all tables from the catalog */
     public void clear() {
-        // some code goes here
+        theMap.clear();
     }
     
     /**

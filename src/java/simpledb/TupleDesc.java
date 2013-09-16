@@ -75,7 +75,7 @@ public class TupleDesc implements Serializable {
      */
     public TupleDesc(Type[] typeAr) {
         for(int i =0; i< typeAr.length; i++){
-            TDItem someItem = new TDItem(typeAr[i], null);
+            TDItem someItem = new TDItem(typeAr[i], "");
             theList.add(someItem);
         }
     }
@@ -98,7 +98,7 @@ public class TupleDesc implements Serializable {
      */
     public String getFieldName(int i) throws NoSuchElementException {
         if(i >= this.numFields() || i < 0)
-            throw new NoSuchElementException();
+            throw new NoSuchElementException(String.valueOf(i));
 
         return theList.get(i).fieldName;
     }
@@ -115,7 +115,7 @@ public class TupleDesc implements Serializable {
      */
     public Type getFieldType(int i) throws NoSuchElementException {
         if(i >= this.numFields() || i < 0)
-            throw new NoSuchElementException();
+            throw new NoSuchElementException(String.valueOf(i));
 
         return theList.get(i).fieldType;
     }
@@ -147,7 +147,7 @@ public class TupleDesc implements Serializable {
         }
 
         if(!found)
-            throw new NoSuchElementException();
+            throw new NoSuchElementException(name);
 
         return index;
     }
