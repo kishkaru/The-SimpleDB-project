@@ -44,14 +44,14 @@ public class Catalog {
             theList.add(name);
             theList.add(pkeyField);
 
-//            Iterator<ArrayList<Object>> theIterator = theMap.values().iterator();
-//            while(theIterator.hasNext()){
-//                ArrayList aList = theIterator.next();
-//                if(aList.get(1).equals(name)){
-//                    theMap.remove( ((DbFile)aList.get(0)).getId());
-//                    break;
-//                }
-//            }
+            Iterator<ArrayList<Object>> theIterator = theMap.values().iterator();
+            while(theIterator.hasNext()){
+                ArrayList aList = theIterator.next();
+                if(aList.get(1).equals(name)){
+                    theMap.remove( ((DbFile)aList.get(0)).getId());
+                    break;
+                }
+            }
 
             theMap.put(file.getId(), theList);
         }
