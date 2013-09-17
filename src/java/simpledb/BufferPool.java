@@ -1,6 +1,7 @@
 package simpledb;
 
 import java.io.*;
+import java.util.HashMap;
 
 /**
  * BufferPool manages the reading and writing of pages into memory from
@@ -19,6 +20,8 @@ public class BufferPool {
     other classes. BufferPool should use the numPages argument to the
     constructor instead. */
     public static final int DEFAULT_PAGES = 50;
+    private HashMap<Integer, Page> theBufferPool;
+    private int maxNumPages;
 
     /**
      * Creates a BufferPool that caches up to numPages pages.
@@ -26,7 +29,12 @@ public class BufferPool {
      * @param numPages maximum number of pages in this buffer pool.
      */
     public BufferPool(int numPages) {
-        // some code goes here
+        if(numPages < 1)
+            throw new IllegalArgumentException(String.valueOf(numPages));
+        else{
+            theBufferPool = new HashMap<Integer, Page>((int) (numPages/0.75));
+            maxNumPages = numPages;
+        }
     }
 
     /**
@@ -46,8 +54,26 @@ public class BufferPool {
      */
     public  Page getPage(TransactionId tid, PageId pid, Permissions perm)
         throws TransactionAbortedException, DbException {
-        // some code goes here
-        return null;
+
+        long theId = tid.getId();
+        String availPermissions = perm.toString();
+
+        if(//!permissions are ok)
+                //throw an exception
+        else{
+            int hashCode = pid.hashCode();
+            Page readPage = theBufferPool.get(pid.hashCode());
+            if(readPage != null)
+                return readPage;
+            else if(maxNumPages < 1)
+                throw new DbException("BufferPool full");
+            else{
+                Page newpage = Database.getCatalog().getDbFile(pid.getTableId()).readPage(pid);
+                theBufferPool.put(hashCode, newpage);
+                maxNumPages--;
+                return theBufferPool.get(hashCode);
+            }
+        }
     }
 
     /**
