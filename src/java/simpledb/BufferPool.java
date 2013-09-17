@@ -55,25 +55,18 @@ public class BufferPool {
     public  Page getPage(TransactionId tid, PageId pid, Permissions perm)
         throws TransactionAbortedException, DbException {
 
-        long theId = tid.getId();
-        String availPermissions = perm.toString();
-
-        if(//!permissions are ok)
-                //throw an exception
+        int hashCode = pid.hashCode();
+        Page readPage = theBufferPool.get(pid.hashCode());
+        if(readPage != null)
+            return readPage;
+        else if(maxNumPages < 1)
+            throw new DbException("BufferPool full");
         else{
-            int hashCode = pid.hashCode();
-            Page readPage = theBufferPool.get(pid.hashCode());
-            if(readPage != null)
-                return readPage;
-            else if(maxNumPages < 1)
-                throw new DbException("BufferPool full");
-            else{
-                Page newpage = Database.getCatalog().getDbFile(pid.getTableId()).readPage(pid);
-                theBufferPool.put(hashCode, newpage);
-                maxNumPages--;
-                return theBufferPool.get(hashCode);
+            Page newpage = Database.getCatalog().getDbFile(pid.getTableId()).readPage(pid);
+            theBufferPool.put(hashCode, newpage);
+            maxNumPages--;
+            return theBufferPool.get(hashCode);
             }
-        }
     }
 
     /**
