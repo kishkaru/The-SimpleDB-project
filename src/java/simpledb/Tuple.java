@@ -25,6 +25,9 @@ public class Tuple implements Serializable {
      */
 
     public Tuple(TupleDesc td) {
+        if(td.numFields() < 1)
+            throw new IllegalArgumentException(td.toString());
+
         this.description = td;
         this.tuple = new Field[td.numFields()];
     }
@@ -66,11 +69,10 @@ public class Tuple implements Serializable {
         if(i >= this.tuple.length || i < 0)
             throw new IllegalArgumentException(String.valueOf(i));
 
-        if (f.getType() == Type.STRING_TYPE) {
+        if (f.getType() == Type.STRING_TYPE)
             this.tuple[i] = new StringField(((StringField) f).getValue(), Type.STRING_LEN);
-        } else if (f.getType() == Type.INT_TYPE) {
+        else
             this.tuple[i] = new IntField(((IntField) f).getValue());
-        }
     }
 
     /**
@@ -96,26 +98,29 @@ public class Tuple implements Serializable {
      */
     public String toString() {
         String string = "";
-        int i = 0;
-        for (; i < this.description.numFields() - 1; i++) {
-            if (this.getField(i) != null) {
-                if (this.description.getFieldType(i) == Type.STRING_TYPE) 
-                    string = string + ((StringField) this.getField(i)).getValue() + "\t";
-                if (this.description.getFieldType(i) == Type.INT_TYPE) 
-                    string = string + ((IntField) this.getField(i)).toString() + "\t";
-            } else {
-                string = string + "null" + "\t";
+        int i;
+
+        for (i = 0; i < this.description.numFields() - 1; i++) {
+            Field readField= this.tuple[i];
+            if (readField != null) {
+                if (readField.getType() == Type.STRING_TYPE)
+                    string = string + ((StringField) readField).getValue() + "\t";
+                else
+                    string = string + ((IntField) readField).getValue() + "\t";
             }
+            else
+                string = string + "null" + "\t";
         }
 
-        if (this.getField(i) != null) {
-            if (this.description.getFieldType(i) == Type.STRING_TYPE) 
-                string = string + ((StringField) this.getField(i)).getValue() + "\n";
-            if (this.description.getFieldType(i) == Type.INT_TYPE) 
-                string = string + ((IntField) this.getField(i)).toString() + "\n";
-        } else {
-            string = string + "null" + "\n";
+        Field readField= this.tuple[i];
+        if (readField != null) {
+            if (readField.getType() == Type.STRING_TYPE)
+                string = string + ((StringField) readField).getValue() + "\n";
+            else
+                string = string + ((IntField) readField).getValue() + "\n";
         }
+        else
+            string = string + "null" + "\n";
 
         return string;
     }
