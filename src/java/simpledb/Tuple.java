@@ -63,9 +63,12 @@ public class Tuple implements Serializable {
      *            new value for the field.
      */
     public void setField(int i, Field f) {
-        if (this.description.getFieldType(i) == Type.STRING_TYPE) {
+        if(i >= this.tuple.length || i < 0)
+            throw new IllegalArgumentException(String.valueOf(i));
+
+        if (f.getType() == Type.STRING_TYPE) {
             this.tuple[i] = new StringField(((StringField) f).getValue(), Type.STRING_LEN);
-        } else if (this.description.getFieldType(i) == Type.INT_TYPE) {
+        } else if (f.getType() == Type.INT_TYPE) {
             this.tuple[i] = new IntField(((IntField) f).getValue());
         }
     }
@@ -77,8 +80,8 @@ public class Tuple implements Serializable {
      *            field index to return. Must be a valid index.
      */
     public Field getField(int i) {
-        if (!(this.tuple[i] instanceof StringField) || !(this.tuple[i] instanceof IntField))
-            return null;
+        if(i >= this.tuple.length || i < 0)
+            throw new IllegalArgumentException(String.valueOf(i));
 
         return this.tuple[i];
     }
