@@ -138,9 +138,7 @@ public class TupleDesc implements Serializable {
             index++;
             TDItem theItem = theIterator.next();
             String theName = theItem.fieldName;
-            if(theName == null)
-                continue;
-            else if(theName.equals(name)){
+            if(theName != null && theName.equals(name)){
                 found = true;
                 break;
             }
@@ -163,9 +161,6 @@ public class TupleDesc implements Serializable {
         }
 
         return totalSize;
-        //int oneTuple = Type.INT_TYPE.getLen() + Type.STRING_TYPE.getLen();
-        //return oneTuple;
-        //return oneTuple*this.numFields();
     }
 
     /**
