@@ -25,7 +25,7 @@ public class Tuple implements Serializable {
      */
 
     public Tuple(TupleDesc td) {
-        description = td;
+        this.description = td;
         this.tuple = new Field[td.numFields()];
     }
 
@@ -96,14 +96,20 @@ public class Tuple implements Serializable {
         int i = 0;
         for (; i < this.description.numFields() - 1; i++) {
             if (this.getField(i) != null) {
-                string = string + this.getField(i).getValue().toString() + "\t";
+                if (this.description.getFieldType(i) == Type.STRING_TYPE) 
+                    string = string + ((StringField) this.getField(i)).getValue() + "\t";
+                if (this.description.getFieldType(i) == Type.INT_TYPE) 
+                    string = string + ((IntField) this.getField(i)).toString() + "\t";
             } else {
                 string = string + "null" + "\t";
             }
         }
 
         if (this.getField(i) != null) {
-            string = string + this.getField(i).getValue().toString() + "\n";
+            if (this.description.getFieldType(i) == Type.STRING_TYPE) 
+                string = string + ((StringField) this.getField(i)).getValue() + "\n";
+            if (this.description.getFieldType(i) == Type.INT_TYPE) 
+                string = string + ((IntField) this.getField(i)).toString() + "\n";
         } else {
             string = string + "null" + "\n";
         }
