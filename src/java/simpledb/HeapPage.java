@@ -65,9 +65,9 @@ public class HeapPage implements Page {
         @return the number of tuples on this page
     */
     private int getNumTuples() {        
-        int size = this.td.getSize();
-        int num = (int) (BufferPool.PAGE_SIZE * 8) / (size * 8 + 1);
-        return num;
+        int tupleSizeInBytes = this.td.getSize();
+        double tupsPerPage = Math.floor((BufferPool.PAGE_SIZE * 8) / (tupleSizeInBytes*8 + 1));
+        return (int) tupsPerPage;
     }
 
     /**
@@ -75,8 +75,8 @@ public class HeapPage implements Page {
      * @return the number of bytes in the header of a page in a HeapFile with each tuple occupying tupleSize bytes
      */
     private int getHeaderSize() {
-        int size = Math.ceiling(this.numSlots / 8);  // unsure
-        return size;
+        double headerBytes = Math.ceil(this.getNumTuples() / 8);
+        return (int) headerBytes;
                  
     }
     
@@ -271,8 +271,8 @@ public class HeapPage implements Page {
      */
     public int getNumEmptySlots() {
         int counter = 0;
-        for (int i = 0; i < this.header.length; i++) {
-            if (!isSlotUsed(i))
+        for (int i=0; i<numSlots; i++) {
+            if(!isSlotUsed(i))
                 counter++;
         }
         return counter;
@@ -282,9 +282,12 @@ public class HeapPage implements Page {
      * Returns true if associated slot on this page is filled.
      */
     public boolean isSlotUsed(int i) {
-        if (this.header[i] != 0)
-            return false;
-        return true;
+        int posByte = i / 8;
+        int posBit  = i % 8;
+        byte theByte = header[posByte];
+        int val = theByte >> posBit & 0x0001;
+
+        return val == 0x0001;
     }
 
     /**
@@ -300,13 +303,13 @@ public class HeapPage implements Page {
      * (note that this iterator shouldn't return tuples in empty slots!)
      */
     public Iterator<Tuple> iterator() {
-        List<Tuple> tuple = Arrays.asList(this.tuples);
-        for (int i = this.header.length; i >= 0; i--) {
-            if (isSlotUsed(i)) {
-                tuple.remove(i);
-            }
+        ArrayList<Tuple> tupleList = new ArrayList<Tuple>(numSlots);
+        for (int i=0; i < tuples.length; i++) {
+            if (isSlotUsed(i))
+                System.out.println( ((IntField) (tuples[i]).getField(0)).getValue());
         }
-        return tuple.iterator();  // throw Exception?
+
+        return tupleList.iterator();
     }
 
 }

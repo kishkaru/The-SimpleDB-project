@@ -50,12 +50,11 @@ public class RecordId implements Serializable {
     public boolean equals(Object o) {
         boolean equals = false;
         if (!(o instanceof RecordId))
-            return equals;
-        if (((RecordId) o).getPageId() == this.page) {
-            if (((RecordId) o).tupleno() == this.slot) {
-                equals = true;
-            }
+            equals = false;
+        if( (((RecordId) o).getPageId().hashCode() == this.page.hashCode()) && (((RecordId) o).tupleno() == this.slot)) {
+            equals = true;
         }
+
         return equals;
     }
 
@@ -67,7 +66,7 @@ public class RecordId implements Serializable {
      */
     @Override
     public int hashCode() {
-        String page = Integer.toString(this.page);
+        String page = Integer.toString(this.page.hashCode());
         String slot = Integer.toString(this.slot);
         String hashCode = page + slot;
         return Integer.parseInt(hashCode);
