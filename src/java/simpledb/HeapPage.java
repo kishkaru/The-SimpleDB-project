@@ -306,7 +306,7 @@ public class HeapPage implements Page {
         ArrayList<Tuple> tupleList = new ArrayList<Tuple>(numSlots);
         for (int i=0; i < tuples.length; i++) {
             if (isSlotUsed(i))
-                System.out.println( ((IntField) (tuples[i]).getField(0)).getValue());
+                tupleList.add(this.tuples[i]);
         }
 
         return tupleList.iterator();

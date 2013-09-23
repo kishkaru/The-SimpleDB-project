@@ -52,8 +52,8 @@ public class BufferPool {
      * @param pid the ID of the requested page
      * @param perm the requested permissions on the page
      */
-    public  Page getPage(TransactionId tid, PageId pid, Permissions perm)
-        throws TransactionAbortedException, DbException {
+    public Page getPage(TransactionId tid, PageId pid, Permissions perm)
+        throws TransactionAbortedException, DbException, FileNotFoundException, IOException{
 
         int hashCode = pid.hashCode();
         Page readPage = theBufferPool.get(pid.hashCode());
