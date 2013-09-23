@@ -41,7 +41,8 @@ public class HeapPageId implements PageId {
         String tableId = Integer.toString(getTableId());
         String pgNo = Integer.toString(pageNumber());
         String hashCode = tableId + pgNo;
-        return Integer.parseInt(hashCode);
+
+        return Long.valueOf(hashCode).hashCode();
     }
 
     /**

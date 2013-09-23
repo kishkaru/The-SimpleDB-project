@@ -17,7 +17,7 @@ public interface DbFile extends Serializable {
      *
      * @throws IllegalArgumentException if the page does not exist in this file.
      */
-    public Page readPage(PageId id);
+    public Page readPage(PageId id) throws FileNotFoundException, IOException ;
 
     /**
      * Push the specified page to disk.
@@ -62,7 +62,7 @@ public interface DbFile extends Serializable {
      *
      * @return an iterator over all the tuples stored in this DbFile.
      */
-    public DbFileIterator iterator(TransactionId tid);
+    public DbFileIterator iterator(TransactionId tid) throws FileNotFoundException, IOException, DbException, TransactionAbortedException ;
 
     /**
      * Returns a unique ID used to identify this DbFile in the Catalog. This id
