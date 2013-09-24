@@ -282,8 +282,11 @@ public class HeapPage implements Page {
      * Returns true if associated slot on this page is filled.
      */
     public boolean isSlotUsed(int i) {
-        int posByte = i / 8;
-        int posBit  = i % 8;
+        int posByte = i / 8;        
+	if(posByte > header.length -1)
+		System.out.println("byte: " + posByte + " with header: " + header.length);
+	
+	int posBit  = i % 8;
         byte theByte = header[posByte];
         int val = theByte >> posBit & 0x0001;
 

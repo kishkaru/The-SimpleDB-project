@@ -76,6 +76,7 @@ public class SeqScan implements DbIterator {
         this.tableAlias = tableAlias;
     }
 
+
     public SeqScan(TransactionId tid, int tableid) {
         this(tid, tableid, Database.getCatalog().getTableName(tableid));
     }
@@ -84,8 +85,10 @@ public class SeqScan implements DbIterator {
         DbFile dbFile = Database.getCatalog().getDbFile(this.tableId);
         HeapFile file = (HeapFile) dbFile;
         ArrayList<Page> pages = new ArrayList<Page>(file.numPages());
-        for (int i = 0; i < file.numPages(); i++) {
-            pages.add(file.readPage(new HeapPageId(this.tableId, i)));
+        
+	for (int i = 0; i < file.numPages(); i++) {
+            Page thePage = Database.getBufferPool().getPage(this.tid, new HeapPageId(this.tableId, i), Permissions.READ_WRITE);
+            pages.add(thePage);
         }
         this.iterator = new HeapIterator(pages);
         this.iterator.open();
@@ -126,7 +129,7 @@ public class SeqScan implements DbIterator {
     }
 
     public void rewind() throws DbException, NoSuchElementException, TransactionAbortedException, IOException {
-        this.close();
-        this.open();
+        this.iterator.close();
+        this.iterator.open();
     }
 }
