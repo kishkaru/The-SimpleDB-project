@@ -1,4 +1,6 @@
 package simpledb;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.*;
 
@@ -16,7 +18,7 @@ public interface DbIterator extends Serializable{
    * @throws DbException when there are problems opening/accessing the database.
    */
   public void open()
-      throws DbException, TransactionAbortedException;
+      throws DbException, TransactionAbortedException, IOException;
 
   /** Returns true if the iterator has more tuples.
    * @return true f the iterator has more tuples.
@@ -39,7 +41,7 @@ public interface DbIterator extends Serializable{
    * @throws DbException when rewind is unsupported.
    * @throws IllegalStateException If the iterator has not been opened
    */
-  public void rewind() throws DbException, TransactionAbortedException;
+  public void rewind() throws DbException, TransactionAbortedException, IOException;
 
   /**
    * Returns the TupleDesc associated with this DbIterator. 

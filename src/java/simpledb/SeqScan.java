@@ -1,5 +1,7 @@
 package simpledb;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -78,7 +80,7 @@ public class SeqScan implements DbIterator {
         this(tid, tableid, Database.getCatalog().getTableName(tableid));
     }
 
-    public void open() throws DbException, TransactionAbortedException {
+    public void open() throws DbException, TransactionAbortedException, IOException {
         DbFile file = Database.getCatalog().getDbFile(this.tableId);
         ArrayList<Page> pages = new ArrayList<Page>(((HeapFile) file).numPages());
         for (int i = 0; i < ((HeapFile) file).numPages(); i++) {
@@ -122,7 +124,7 @@ public class SeqScan implements DbIterator {
         this.iterator = null;
     }
 
-    public void rewind() throws DbException, NoSuchElementException, TransactionAbortedException {
+    public void rewind() throws DbException, NoSuchElementException, TransactionAbortedException, IOException {
         this.open();
         this.close();
     }
