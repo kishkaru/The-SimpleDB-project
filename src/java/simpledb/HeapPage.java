@@ -75,7 +75,7 @@ public class HeapPage implements Page {
      * @return the number of bytes in the header of a page in a HeapFile with each tuple occupying tupleSize bytes
      */
     private int getHeaderSize() {
-        double headerBytes = Math.ceil(this.getNumTuples() / 8);
+        double headerBytes = Math.ceil(this.getNumTuples() / 8f);
         return (int) headerBytes;
                  
     }
@@ -282,11 +282,11 @@ public class HeapPage implements Page {
      * Returns true if associated slot on this page is filled.
      */
     public boolean isSlotUsed(int i) {
-        int posByte = i / 8;        
-	if(posByte > header.length -1)
-		System.out.println("byte: " + posByte + " with header: " + header.length);
+        int posByte = i / 8;
+	    if(posByte > header.length -1)
+		    System.out.println("byte: " + posByte + " with header size: " + header.length);
 	
-	int posBit  = i % 8;
+	    int posBit  = i % 8;
         byte theByte = header[posByte];
         int val = theByte >> posBit & 0x0001;
 
