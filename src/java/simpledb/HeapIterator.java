@@ -12,6 +12,9 @@ public class HeapIterator implements DbFileIterator{
     }
 
     public void open() throws DbException, TransactionAbortedException{
+        if(pagesList.size() == 0)
+            throw new DbException("There are no pages in the pagesList!");
+
         Page firstPage = pagesList.get(0);
         tupleIterator = ((HeapPage) firstPage).iterator();
     }
@@ -45,7 +48,6 @@ public class HeapIterator implements DbFileIterator{
             return tupleIterator.next();
         } else {
             currPage++;
-            //System.out.println(currPage);
             if (currPage >= pagesList.size()) {
                 throw new NoSuchElementException(String.valueOf(currPage));
             } 

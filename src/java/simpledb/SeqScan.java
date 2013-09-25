@@ -90,6 +90,7 @@ public class SeqScan implements DbIterator {
             Page thePage = Database.getBufferPool().getPage(this.tid, new HeapPageId(this.tableId, i), Permissions.READ_WRITE);
             pages.add(thePage);
         }
+
         this.iterator = new HeapIterator(pages);
         this.iterator.open();
 
