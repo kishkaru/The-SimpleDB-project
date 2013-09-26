@@ -69,10 +69,10 @@ public class Tuple implements Serializable {
         if(i >= this.tuple.length || i < 0)
             throw new IllegalArgumentException(String.valueOf(i));
 
-        if (f.getType() == Type.STRING_TYPE)
-            this.tuple[i] = new StringField(((StringField) f).getValue(), Type.STRING_LEN);
+        if(f.getType() == this.description.getFieldType(i))
+            this.tuple[i] = f;
         else
-            this.tuple[i] = new IntField(((IntField) f).getValue());
+            throw new IllegalArgumentException(f.toString());
     }
 
     /**
@@ -103,10 +103,7 @@ public class Tuple implements Serializable {
         for (i = 0; i < this.description.numFields() - 1; i++) {
             Field readField= this.tuple[i];
             if (readField != null) {
-                if (readField.getType() == Type.STRING_TYPE)
-                    string = string + ((StringField) readField).getValue() + "\t";
-                else
-                    string = string + ((IntField) readField).getValue() + "\t";
+                string = string + readField.toString() + "\t";
             }
             else
                 string = string + "null" + "\t";
@@ -114,10 +111,7 @@ public class Tuple implements Serializable {
 
         Field readField= this.tuple[i];
         if (readField != null) {
-            if (readField.getType() == Type.STRING_TYPE)
-                string = string + ((StringField) readField).getValue() + "\n";
-            else
-                string = string + ((IntField) readField).getValue() + "\n";
+            string = string + readField.toString() + "\n";
         }
         else
             string = string + "null" + "\n";
