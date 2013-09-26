@@ -126,7 +126,7 @@ public class TestUtil {
      * If not, throw an assertion.
      */
     public static void matchAllTuples(DbIterator expected, DbIterator actual) throws
-            DbException, TransactionAbortedException {
+            DbException, TransactionAbortedException, IOException {
         // TODO(ghuo): this n^2 set comparison is kind of dumb, but we haven't
         // implemented hashCode or equals for tuples.
         boolean matched = false;
