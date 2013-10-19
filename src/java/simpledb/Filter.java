@@ -8,6 +8,10 @@ import java.util.*;
 public class Filter extends Operator {
 
     private static final long serialVersionUID = 1L;
+    private Predicate predicate;
+    private DbIterator child;
+    private ArrayList<Tuple> children;
+    private Iterator<Tuple> iterator;
 
     /**
      * Constructor accepts a predicate to apply and a child operator to read
@@ -19,30 +23,36 @@ public class Filter extends Operator {
      *            The child operator
      */
     public Filter(Predicate p, DbIterator child) {
-        // some code goes here
+        this.predicate = p;
+        this.child = child;
     }
 
     public Predicate getPredicate() {
-        // some code goes here
-        return null;
+        return this.predicate;
     }
 
     public TupleDesc getTupleDesc() {
-        // some code goes here
-        return null;
+        return this.child.getTupleDesc();
     }
 
-    public void open() throws DbException, NoSuchElementException,
-            TransactionAbortedException {
-        // some code goes here
+    public void open() throws DbException, NoSuchElementException, TransactionAbortedException {
+    	DbIterator child = this.child;
+        child.open();
+        while (child.hasNext()) {
+        	children.add((Tuple) child.next());
+        }
+        Collections.sort(children);
+        this.iterator = children.iterator();
+        super.open();
     }
 
     public void close() {
-        // some code goes here
+        super.close();
+        this.iterator = null;
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
-        // some code goes here
+        this.iterator = children.iterator();
     }
 
     /**
@@ -56,19 +66,27 @@ public class Filter extends Operator {
      */
     protected Tuple fetchNext() throws NoSuchElementException,
             TransactionAbortedException, DbException {
-        // some code goes here
-        return null;
+        Iterator<Tuple> iterator = this.iterator;
+        Predicate predicate = this.predicate;
+        Tuple result;
+        while (iterator != null && iterator.hasNext()) {
+        	Tuple next = iterator.next();
+        	if (predicate.filter(next)) {
+        		result = next;
+        		break;
+        	}
+        }
+        return result;
     }
 
     @Override
     public DbIterator[] getChildren() {
-        // some code goes here
-        return null;
+        return new DbIterator[] { this.child };
     }
 
     @Override
     public void setChildren(DbIterator[] children) {
-        // some code goes here
+        this.child = children[0];
     }
 
 }
