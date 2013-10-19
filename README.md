@@ -2,7 +2,7 @@
 
 SimpleDB is a Java-based lightweight database management system. It was built from ground up to be easy to implement and use.
 
-## Useage
+## Usage
 
 Clone repo.
 
