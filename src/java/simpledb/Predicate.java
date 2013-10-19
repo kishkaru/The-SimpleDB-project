@@ -2,7 +2,7 @@ package simpledb;
 
 import java.io.Serializable;
 import java.lang.*;
-
+import java.util.*;
 /**
  * Predicate compares tuples to a specified Field value.
  */
@@ -115,10 +115,9 @@ public class Predicate implements Serializable {
      * operand_string
      */
     public String toString() {
-    	String string = "f = "; 
-    	String field_id = this.field.toString();
+    	String field_id = this.field + "";
     	String op = this.op.toString();
     	String operand = this.operand.toString();
-        return string + field_id + op + operand;
+      return "f = " + field_id + " op = " + op + " operand = "+ operand;
     }
 }
