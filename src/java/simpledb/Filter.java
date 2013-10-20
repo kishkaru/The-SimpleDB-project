@@ -1,7 +1,7 @@
 package simpledb;
 
 import java.util.*;
-
+import java.io.IOException;
 /**
  * Filter is an operator that implements a relational select.
  */
@@ -10,7 +10,7 @@ public class Filter extends Operator {
     private static final long serialVersionUID = 1L;
     private Predicate predicate;
     private DbIterator child;
-    private ArrayList<Tuple> children;
+    private ArrayList<Tuple> children = new ArrayList<Tuple>();
     private Iterator<Tuple> iterator;
 
     /**
@@ -35,13 +35,13 @@ public class Filter extends Operator {
         return this.child.getTupleDesc();
     }
 
-    public void open() throws DbException, NoSuchElementException, TransactionAbortedException {
+    public void open() throws DbException, NoSuchElementException, TransactionAbortedException, IOException {
     	DbIterator child = this.child;
         child.open();
         while (child.hasNext()) {
         	children.add((Tuple) child.next());
         }
-        Collections.sort(children);
+        //Collections.sort(children);
         this.iterator = children.iterator();
         super.open();
     }
@@ -68,7 +68,7 @@ public class Filter extends Operator {
             TransactionAbortedException, DbException {
         Iterator<Tuple> iterator = this.iterator;
         Predicate predicate = this.predicate;
-        Tuple result;
+        Tuple result = null;
         while (iterator != null && iterator.hasNext()) {
         	Tuple next = iterator.next();
         	if (predicate.filter(next)) {
