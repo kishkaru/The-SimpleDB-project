@@ -13,6 +13,9 @@ public class Join extends Operator {
     private DbIterator c1 = null;
     private DbIterator c2 = null;
 
+    private Tuple t1 = null;
+    private Tuple t2 = null;
+
 
     /**
      * Constructor. Accepts to children to join and the predicate to join them
@@ -102,39 +105,56 @@ public class Join extends Operator {
      * @return The next matching tuple.
      * @see JoinPredicate#filter
      */
-    protected Tuple fetchNext() throws TransactionAbortedException, DbException {
 
-        while (c2.hasNext()) {
-            Tuple t1 = c2.next();
-            while(c1.hasNext()) {
-                Tuple t2 = c1.next();
+    protected Tuple fetchNext() throws TransactionAbortedException, DbException, IOException {
+        if (c1.hasNext() && t1 == null) {
+            t1 = c1.next();
+        }
+        if (c2.hasNext() && t2 == null) {
+            t2 = c2.next();
+        }
 
-                System.out.println("crossing new tuple");
-                //System.out.println("t1:" + t1.getField(num) + "t2:" + t2.getField(num))
+        while(true) {
+            Tuple t = null;
 
-                if(pred.filter(t1, t2)){
-                    //System.out.println("crossing new tuple");
-                    Tuple newTuple = new Tuple(this.getTupleDesc());
+            if (pred.filter(t1, t2))
+                t = mergeTwoTuples(t1, t2);
 
-                    int counter = 0;
-                    for (int i = 0; i < c2.getTupleDesc().numFields(); i++) {
-                        newTuple.setField(counter, t1.getField(i));
-                        //System.out.println("t1 field: " + t1.getField(i));
-                        counter++;
-                    }
-                    for (int i = 0; i < c1.getTupleDesc().numFields(); i++) {
-                        newTuple.setField(counter, t2.getField(i));
-                        //System.out.println("t2 field: " + t2.getField(i));
-                        counter++;
-                    }
-
-                    return newTuple;
+            if (!c2.hasNext()) {
+                if (c1.hasNext())
+                    t1 = c1.next();
+                else {
+                    if (t != null)
+                        return t;
+                    else
+                        return null;
                 }
+                c2.rewind();
+            }
+            t2 = c2.next();
 
-                //newTuple.setRecordId(t.getRecordId());
+            if (t != null) {
+                return t;
             }
         }
-        return null;
+    }
+
+    private Tuple mergeTwoTuples(Tuple t1, Tuple t2){
+        Tuple newTuple = new Tuple(this.getTupleDesc());
+
+        int counter = 0;
+        for (int i = 0; i < c1.getTupleDesc().numFields(); i++) {
+            newTuple.setField(counter, t1.getField(i));
+            //System.out.println("t1 field: " + t1.getField(i));
+            counter++;
+        }
+        for (int i = 0; i < c2.getTupleDesc().numFields(); i++) {
+            newTuple.setField(counter, t2.getField(i));
+            //System.out.println("t2 field: " + t2.getField(i));
+            counter++;
+        }
+
+        return newTuple;
     }
 
     @Override
