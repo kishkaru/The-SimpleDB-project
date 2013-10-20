@@ -81,7 +81,7 @@ public class StringAggregator implements Aggregator {
         }
         return new TupleIterator(td, tuples);
     }
-
+    
     private void calculateAggregate(ArrayList<Map.Entry<Field, IntField>> groups, HashMap<Field, IntField> aggregates, Aggregator.Op op) {
     	if (op != Aggregator.Op.COUNT) {
     		return;

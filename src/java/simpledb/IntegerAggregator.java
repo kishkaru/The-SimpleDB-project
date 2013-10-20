@@ -5,6 +5,7 @@ import java.lang.*;
 /**
  * Knows how to compute some aggregate over a set of IntFields.
  */
+
 public class IntegerAggregator implements Aggregator {
 	
     private static final long serialVersionUID = 1L;

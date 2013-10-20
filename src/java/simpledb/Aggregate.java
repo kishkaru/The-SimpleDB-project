@@ -90,7 +90,7 @@ public class Aggregate extends Operator {
     public static String nameOfAggregatorOp(Aggregator.Op aop) {
 	    return aop.toString();
     }
-
+    
     public void open() throws IOException, NoSuchElementException, DbException, TransactionAbortedException {
 	    Type type;
 	    DbIterator input = this.input;
