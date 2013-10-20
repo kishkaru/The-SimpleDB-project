@@ -103,13 +103,23 @@ public class HeapFile implements DbFile {
             HeapPage thePage = (HeapPage) Database.getBufferPool().getPage(tid, new HeapPageId(this.getId(), i), Permissions.READ_WRITE);
             if(thePage.getNumEmptySlots() > 0){
                 thePage.insertTuple(t);
+                theList.add(thePage);
                 done = true;
                 break;
             }
         }
 
         if(!done){
-           //HeapPage newPage = new HeapPage();
+            byte[] newData = HeapPage.createEmptyPageData();
+            FileOutputStream theFile = new FileOutputStream(file, true);
+            theFile.write(newData);
+            theFile.close();
+
+            HeapPageId pid = new HeapPageId(this.getId() ,this.numPages()+1);
+            HeapPage newPage = new HeapPage(pid, newData);
+            theList.add(newPage);
+
+
         }
 
         return theList;
