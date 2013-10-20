@@ -112,7 +112,7 @@ public class HeapFile implements DbFile {
             if(thePage.getNumEmptySlots() > 0){
                 thePage.insertTuple(t);
                 thePage.markDirty(true,tid);
-
+                this.writePage(thePage);
 
                 pageList.add(thePage);
                 done = true;
@@ -123,15 +123,19 @@ public class HeapFile implements DbFile {
         if(!done){
             //byte[] newData = HeapPage.createEmptyPageData();
             HeapPageId pid = new HeapPageId(this.getId() ,this.numPages());
+            //HeapPage newPage = new HeapPage(pid, newData);
+
             HeapPage newPage = (HeapPage) Database.getBufferPool().getPage(tid, pid, Permissions.READ_WRITE);
             newPage.insertTuple(t);
             newPage.markDirty(true,tid);
             pageList.add(newPage);
 
-            byte[] newData = newPage.getPageData();
-            FileOutputStream theFile = new FileOutputStream(file, true);
-            theFile.write(newData);
-            theFile.close();
+            this.writePage(newPage);
+            //newData = newPage.getPageData();
+
+            //FileOutputStream theFile = new FileOutputStream(file, true);
+            //theFile.write(newData);
+            //theFile.close();
         }
 
         return pageList;
