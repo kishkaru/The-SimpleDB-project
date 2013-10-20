@@ -1,5 +1,7 @@
 package simpledb;
 
+import java.io.IOException;
+
 /**
  * The delete operator. Delete reads tuples from its child operator and removes
  * them from the table they belong to.
@@ -8,6 +10,8 @@ public class Delete extends Operator {
 
     private static final long serialVersionUID = 1L;
 
+    private TransactionId tid;
+    private DbIterator child;
     /**
      * Constructor specifying the transaction that this delete belongs to as
      * well as the child to read from.
@@ -18,24 +22,26 @@ public class Delete extends Operator {
      *            The child operator from which to read tuples for deletion
      */
     public Delete(TransactionId t, DbIterator child) {
-        // some code goes here
+        this.tid = t;
+        this.child = child;
     }
 
     public TupleDesc getTupleDesc() {
-        // some code goes here
-        return null;
+        return this.child.getTupleDesc();
     }
 
-    public void open() throws DbException, TransactionAbortedException {
-        // some code goes here
+    public void open() throws DbException, TransactionAbortedException, IOException {
+        child.open();
+        super.open();
     }
 
     public void close() {
-        // some code goes here
+        super.close();
+        child.close();
     }
 
-    public void rewind() throws DbException, TransactionAbortedException {
-        // some code goes here
+    public void rewind() throws DbException, TransactionAbortedException, IOException {
+        child.rewind();
     }
 
     /**
@@ -47,20 +53,34 @@ public class Delete extends Operator {
      * @see Database#getBufferPool
      * @see BufferPool#deleteTuple
      */
-    protected Tuple fetchNext() throws TransactionAbortedException, DbException {
-        // some code goes here
-        return null;
+    protected Tuple fetchNext() throws TransactionAbortedException, DbException, IOException {
+        BufferPool theBuffer = Database.getBufferPool();
+
+        int count = 0;
+        while(child.hasNext()){
+            Tuple tupe = child.next();
+            theBuffer.deleteTuple(this.tid, tupe);
+            count++;
+        }
+
+        Type[] t = new Type[1];
+        t[0] = Type.INT_TYPE;
+        Tuple result = new Tuple(new TupleDesc(t));
+        result.setField(0, new IntField(count));
+
+        return result;
     }
 
     @Override
     public DbIterator[] getChildren() {
-        // some code goes here
-        return null;
+        return new DbIterator[] { this.child };
     }
 
     @Override
     public void setChildren(DbIterator[] children) {
-        // some code goes here
+        if (this.child!=children[0]) {
+            this.child = children[0];
+        }
     }
 
 }

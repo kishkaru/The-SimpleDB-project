@@ -13,6 +13,7 @@ public class Insert extends Operator {
     private TransactionId tid;
     private DbIterator child;
     private int tableId;
+    private boolean called = false;
 
     /**
      * Constructor.
@@ -75,6 +76,11 @@ public class Insert extends Operator {
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException, IOException {
         BufferPool theBuffer = Database.getBufferPool();
+
+        if(this.called)
+            return null;
+        else
+            this.called = true;
 
         int count = 0;
         while(child.hasNext()){
