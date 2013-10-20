@@ -258,12 +258,11 @@ public class HeapPage implements Page {
         else if(!(t.getTupleDesc().equals(this.td)))
             throw new DbException("td doesn't match");
 
-        for(int i=0; i<header.length; i++){
+        for(int i=0; i<this.getNumTuples(); i++){
             if(!this.isSlotUsed(i)){
                 this.markSlotUsed(i,true);
                 this.tuples[i] = t;
                 t.setRecordId(new RecordId(this.pid,i));
-                //System.out.println("adding " + i);
                 break;
             }
         }
