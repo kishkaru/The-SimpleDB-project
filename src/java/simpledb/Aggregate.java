@@ -2,6 +2,7 @@ package simpledb;
 
 import java.util.*;
 import java.lang.*;
+import java.io.IOException;
 
 /**
  * The Aggregation operator that computes an aggregate (e.g., sum, avg, max,
@@ -90,18 +91,18 @@ public class Aggregate extends Operator {
 	    return aop.toString();
     }
 
-    public void open() throws NoSuchElementException, DbException, TransactionAbortedException {
+    public void open() throws IOException, NoSuchElementException, DbException, TransactionAbortedException {
 	    Type type;
 	    DbIterator input = this.input;
 	    if (this.gfield == Aggregator.NO_GROUPING) {
 	    	type = Type.INT_TYPE;
 	    } else {
-	    	type = input.getTupleDesc().getType(this.gfield);
+	    	type = input.getTupleDesc().getFieldType(this.gfield);
 	    } 
 	    
 	    input.open();
 	    if (type == Type.INT_TYPE) {
-	    	IntegerAggreator agg = new IntegerAggregator(this.gfield, Type.INT_TYPE, this.afield, this.aop);
+	    	IntegerAggregator agg = new IntegerAggregator(this.gfield, Type.INT_TYPE, this.afield, this.aop);
 	    	while (input.hasNext()) {
 	    		agg.mergeTupleIntoGroup(input.next());
 	    	}
@@ -124,7 +125,7 @@ public class Aggregate extends Operator {
      * the result tuple should contain one field representing the result of the
      * aggregate. Should return null if there are no more tuples.
      */
-    protected Tuple fetchNext() throws TransactionAbortedException, DbException {
+    protected Tuple fetchNext() throws IOException, TransactionAbortedException, DbException {
 	    Tuple tuple = null;
 	    if (this.output.hasNext()) {
 	    	tuple = this.output.next();
@@ -133,7 +134,7 @@ public class Aggregate extends Operator {
 	    	
     }
 
-    public void rewind() throws DbException, TransactionAbortedException {
+    public void rewind() throws IOException, DbException, TransactionAbortedException {
 	    this.output.rewind();
     }
 
@@ -151,12 +152,12 @@ public class Aggregate extends Operator {
     public TupleDesc getTupleDesc() {
 	    TupleDesc result = null;
 	    TupleDesc td = this.input.getTupleDesc();
-	    Type atype = td.getType(this.afield);
+	    Type atype = td.getFieldType(this.afield);
 	    String aname = td.getFieldName(this.afield);
 	    if (this.gfield == Aggregator.NO_GROUPING) {
 	    	result = new TupleDesc(new Type[]{atype}, new String[]{aname});
 	    } else {
-	    	Type gtype = td.getType(this.gfield);
+	    	Type gtype = td.getFieldType(this.gfield);
 	    	String gname = td.getFieldName(this.gfield);
 	    	result = new TupleDesc(new Type[]{atype, gtype}, new String[]{aname, gname});
 	    }
