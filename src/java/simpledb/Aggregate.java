@@ -13,7 +13,7 @@ public class Aggregate extends Operator {
 
     private static final long serialVersionUID = 1L;
     private DbIterator input;
-    private DbIterator output;
+    private DbIterator aggregator;
     private int afield;
     private int gfield;
     private Aggregator.Op aop;
@@ -61,7 +61,7 @@ public class Aggregate extends Operator {
     	if (this.gfield == Aggregator.NO_GROUPING) {
     		return null;
     	}
-    	return this.output.getTupleDesc().getFieldName(this.gfield);
+    	return this.input.getTupleDesc().getFieldName(this.gfield);
 	
     }
 
@@ -77,7 +77,7 @@ public class Aggregate extends Operator {
      *         tuples
      * */
     public String aggregateFieldName() {
-	    return this.output.getTupleDesc().getFieldName(this.afield);
+	    return this.input.getTupleDesc().getFieldName(this.afield);
     }
 
     /**
@@ -99,23 +99,24 @@ public class Aggregate extends Operator {
 	    } else {
 	    	type = input.getTupleDesc().getFieldType(this.gfield);
 	    } 
-	    
+	   
+      super.open();
 	    input.open();
 	    if (type == Type.INT_TYPE) {
 	    	IntegerAggregator agg = new IntegerAggregator(this.gfield, Type.INT_TYPE, this.afield, this.aop);
 	    	while (input.hasNext()) {
 	    		agg.mergeTupleIntoGroup(input.next());
 	    	}
-	    	this.output = agg.iterator();
+	    	this.aggregator = agg.iterator();
 	    } else if (type == Type.STRING_TYPE) {
 	    	StringAggregator agg = new StringAggregator(this.gfield, Type.STRING_TYPE, this.afield, this.aop);
 	    	while (input.hasNext()) {
 	    		agg.mergeTupleIntoGroup(input.next());
 	    	}
-	    	this.output = agg.iterator();
+	    	this.aggregator = agg.iterator();
 	    }
 	    input.close();
-	    this.output.open();
+      this.aggregator.open();
     }
 
     /**
@@ -127,15 +128,15 @@ public class Aggregate extends Operator {
      */
     protected Tuple fetchNext() throws IOException, TransactionAbortedException, DbException {
 	    Tuple tuple = null;
-	    if (this.output.hasNext()) {
-	    	tuple = this.output.next();
+	    if (this.aggregator.hasNext()) {
+	    	tuple = this.aggregator.next();
 	    }
 	    return tuple;
 	    	
     }
 
     public void rewind() throws IOException, DbException, TransactionAbortedException {
-	    this.output.rewind();
+	    this.aggregator.rewind();
     }
 
     /**
@@ -165,12 +166,12 @@ public class Aggregate extends Operator {
     }
 
     public void close() {
-	    this.output.close();
+	    this.aggregator.close();
     }
 
     @Override
     public DbIterator[] getChildren() {
-	    return new DbIterator[] {this.output};
+	    return new DbIterator[] {this.aggregator};
     }
 
     @Override

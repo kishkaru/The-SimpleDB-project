@@ -1,5 +1,8 @@
 package simpledb;
 
+import java.util.*;
+import java.lang.*;
+
 /**
  * Knows how to compute some aggregate over a set of StringFields.
  */
@@ -10,8 +13,8 @@ public class StringAggregator implements Aggregator {
     private Type gbfieldtype;
     private int afield;
     private Op op;
-    private ArrayList<Map.Entry<Field, IntField>> groups;
-    private HashMap<Field, IntField> aggregates;
+    private ArrayList<Map.Entry<Field, Field>> groups;
+    private HashMap<Field, Field> aggregates;
 
     /**
      * Aggregate constructor
@@ -27,7 +30,7 @@ public class StringAggregator implements Aggregator {
         this.gbfieldtype = gbfieldtype;
         this.afield = afield;
         this.op = what;
-        this.groups = new ArrayList<Map.Entry<Field, IntField>>();
+        this.groups = new ArrayList<Map.Entry<Field, Field>>();
     }
 
     /**
@@ -41,7 +44,7 @@ public class StringAggregator implements Aggregator {
         } else {
         	key = tup.getField(this.gbfield);
         }
-        groups.add(new AbstractMap.SimpleEntry<Field, IntField>(key, tup.getField(this.afield)));
+        groups.add(new AbstractMap.SimpleEntry<Field, Field>(key, tup.getField(this.afield)));
     }
 
     /**
@@ -53,14 +56,14 @@ public class StringAggregator implements Aggregator {
      *   aggregate specified in the constructor.
      */
     public DbIterator iterator() {
-    	Tuple tuple;
-    	TupleDesc td;
+    	Tuple tuple = null;
+    	TupleDesc td = null;
     	ArrayList<Tuple> tuples = new ArrayList<Tuple>();
-        this.aggregates = new HashMap<Field, IntField>();
+        this.aggregates = new HashMap<Field, Field>();
         
         // populate aggregates hashmap
         calculateAggregate(this.groups, this.aggregates, this.op);
-        Set<Map.Entry<StringField, IntField>> set = this.aggregates.entrySet();
+        Set<Map.Entry<Field, Field>> set = this.aggregates.entrySet();
         
         IntField noGB = new IntField(Aggregator.NO_GROUPING);
         if (this.aggregates.containsKey(noGB)) {
@@ -68,13 +71,19 @@ public class StringAggregator implements Aggregator {
         	tuple = new Tuple(td);
         	tuple.setField(0, noGB);
         } else {
-        	for (Map.Entry<Field, IntField> item : set) {
-        		StringField key = item.getKey();
-        		IntField value = item.getValue();
+        	for (Map.Entry<Field, Field> item : set) {
+        		String attr;
+            Field key = item.getKey();
+            if (key.getType() != Type.STRING_TYPE) {
+               attr = ((IntField) key).getValue() + "";
+            } else {
+                attr = ((StringField) key).getValue();
+            }
+            IntField value = (IntField) item.getValue();
         		
         		td = new TupleDesc(new Type[]{Type.STRING_TYPE, Type.INT_TYPE});
         		tuple = new Tuple(td);
-        		tuple.setField(0, key);
+        		tuple.setField(0, new StringField(attr, attr.length()));
         		tuple.setField(1, value);
         		tuples.add(tuple);
         	}
@@ -82,14 +91,12 @@ public class StringAggregator implements Aggregator {
         return new TupleIterator(td, tuples);
     }
     
-    private void calculateAggregate(ArrayList<Map.Entry<Field, IntField>> groups, HashMap<Field, IntField> aggregates, Aggregator.Op op) {
-    	if (op != Aggregator.Op.COUNT) {
-    		return;
-    	}
-    	for (Map.Entry<Field, IntField> group : groups) {
+    private void calculateAggregate(ArrayList<Map.Entry<Field, Field>> groups, HashMap<Field, Field> aggregates, Aggregator.Op op) {
+    	for (Map.Entry<Field, Field> group : groups) {
     		Field key = group.getKey();
+        //System.out.println(key.toString());
     		IntField value = new IntField(1);
-    		IntField agg = aggregates.get(key);
+    		IntField agg = (IntField) aggregates.get(key);
     		if (agg == null) {
     			aggregates.put(key, value);
     		} else {

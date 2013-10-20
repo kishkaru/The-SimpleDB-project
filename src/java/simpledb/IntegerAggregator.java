@@ -1,6 +1,7 @@
 package simpledb;
 
 import java.lang.*;
+import java.util.*;
 
 /**
  * Knows how to compute some aggregate over a set of IntFields.
@@ -13,8 +14,8 @@ public class IntegerAggregator implements Aggregator {
     private Type gbfieldtype;
     private int afield;
     private Op op;
-    private ArrayList<Map.Entry<IntField, IntField>> groups;
-    private HashMap<IntField, IntField> aggregates;
+    private ArrayList<Map.Entry<Field, Field>> groups;
+    private HashMap<Field, Field> aggregates;
 
     /**
      * Aggregate constructor
@@ -36,7 +37,7 @@ public class IntegerAggregator implements Aggregator {
         this.gbfieldtype = gbfieldtype;
         this.afield = afield;
         this.op = what;
-        this.groups = new ArrayList<Map.Entry<IntField, IntField>>();
+        this.groups = new ArrayList<Map.Entry<Field, Field>>();
     }
 
     /**
@@ -51,9 +52,9 @@ public class IntegerAggregator implements Aggregator {
         if (this.gbfield == Aggregator.NO_GROUPING) {
         	key = new IntField(Aggregator.NO_GROUPING);
         } else {
-        	key = tup.getField(this.gbfield);
+        	key = (IntField) tup.getField(this.gbfield);
         }
-        groups.add(new AbstractMap.SimpleEntry<IntField, IntField>(key, tup.getField(this.afield)));
+        groups.add(new AbstractMap.SimpleEntry<Field, Field>(key, tup.getField(this.afield)));
     }
 
     /**
@@ -65,14 +66,14 @@ public class IntegerAggregator implements Aggregator {
      *         the constructor.
      */
     public DbIterator iterator() {
-    	Tuple tuple;
-    	TupleDesc td;
+    	Tuple tuple = null;
+    	TupleDesc td = null;
     	ArrayList<Tuple> tuples = new ArrayList<Tuple>();
-        this.aggregates = new HashMap<IntField, IntField>();
+        this.aggregates = new HashMap<Field, Field>();
         
         // populate aggregates hashmap
         calculateAggregate(this.groups, this.aggregates, this.op);
-        Set<Map.Entry<IntField, IntField>> set = this.aggregates.entrySet();
+        Set<Map.Entry<Field, Field>> set = this.aggregates.entrySet();
         
         IntField noGB = new IntField(Aggregator.NO_GROUPING);
         if (this.aggregates.containsKey(noGB)) {
@@ -80,9 +81,9 @@ public class IntegerAggregator implements Aggregator {
         	tuple = new Tuple(td);
         	tuple.setField(0, noGB);
         } else {
-        	for (Map.Entry<IntField, IntField> item : set) {
-        		IntField key = item.getKey();
-        		IntField value = item.getValue();
+        	for (Map.Entry<Field, Field> item : set) {
+        		IntField key = (IntField) item.getKey();
+        		IntField value = (IntField) item.getValue();
         		
         		td = new TupleDesc(new Type[]{Type.INT_TYPE, Type.INT_TYPE});
         		tuple = new Tuple(td);
@@ -94,13 +95,13 @@ public class IntegerAggregator implements Aggregator {
         return new TupleIterator(td, tuples);
     }
     
-    private void calculateAggregate(ArrayList<Map.Entry<IntField, IntField>> groups, HashMap<IntField, IntField> aggregates, Aggregator.Op op) {
+    private void calculateAggregate(ArrayList<Map.Entry<Field, Field>> groups, HashMap<Field, Field> aggregates, Aggregator.Op op) {
     	HashMap<IntField, Integer> counter = new HashMap<IntField, Integer>(); 
     	
-    	for (Map.Entry<IntField, IntField> group : groups) {
-    		IntField key = group.getKey();
-    		IntField value = group.getValue();
-    		IntField agg = aggregates.get(key);
+    	for (Map.Entry<Field, Field> group : groups) {
+    		IntField key = (IntField) group.getKey();
+    		IntField value = (IntField) group.getValue();
+    		IntField agg = (IntField) aggregates.get(key);
     		
     		// if first item
     		if (agg == null) {
@@ -118,12 +119,12 @@ public class IntegerAggregator implements Aggregator {
     				aggregates.put(key, new IntField(value.getValue() + agg.getValue()));
     			// max case
     			} else if (op == Aggregator.Op.MAX){
-    				if (agg.compare(Op.LESS_THAN, value)) {
+    				if (agg.compare(Predicate.Op.LESS_THAN, value)) {
     					aggregates.put(key, value);
     				}
     			// min case
     			} else if (op == Aggregator.Op.MIN) {
-    				if (agg.compare(Op.GREATER_THAN, value)) {
+    				if (agg.compare(Predicate.Op.GREATER_THAN, value)) {
     					aggregates.put(key, value);
     				}
     			// count case
