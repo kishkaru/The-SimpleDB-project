@@ -121,16 +121,17 @@ public class HeapFile implements DbFile {
         }
 
         if(!done){
-            //byte[] newData = HeapPage.createEmptyPageData();
+            byte[] newData = HeapPage.createEmptyPageData();
             HeapPageId pid = new HeapPageId(this.getId() ,this.numPages());
-            //HeapPage newPage = new HeapPage(pid, newData);
+            HeapPage newPage = new HeapPage(pid, newData);
+            this.writePage(newPage);
 
-            HeapPage newPage = (HeapPage) Database.getBufferPool().getPage(tid, pid, Permissions.READ_WRITE);
+            newPage = (HeapPage) Database.getBufferPool().getPage(tid, pid, Permissions.READ_WRITE);
             newPage.insertTuple(t);
             newPage.markDirty(true,tid);
             pageList.add(newPage);
 
-            this.writePage(newPage);
+            //this.writePage(newPage);
             //newData = newPage.getPageData();
 
             //FileOutputStream theFile = new FileOutputStream(file, true);
