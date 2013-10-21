@@ -116,7 +116,6 @@ public class AggregateTest extends SimpleDbTestBase {
   @Test public void countStringAggregate() throws Exception {
     Aggregate op = new Aggregate(scan2, 1, 0,
         Aggregator.Op.COUNT);
-    System.out.println(scan2.getTupleDesc().getFieldType(1));
     op.open();
     count.open();
     TestUtil.matchAllTuples(count, op);

@@ -14,8 +14,9 @@ public class IntegerAggregator implements Aggregator {
     private Type gbfieldtype;
     private int afield;
     private Op op;
-    private ArrayList<Map.Entry<Field, Field>> groups;
-    private HashMap<Field, Field> aggregates;
+
+    private HashMap<Field, ArrayList<Field>> groupsMap;
+    private ArrayList<Field> nogroupsList;
 
     /**
      * Aggregate constructor
@@ -37,7 +38,11 @@ public class IntegerAggregator implements Aggregator {
         this.gbfieldtype = gbfieldtype;
         this.afield = afield;
         this.op = what;
-        this.groups = new ArrayList<Map.Entry<Field, Field>>();
+
+        if(gbfield == Aggregator.NO_GROUPING)
+            nogroupsList = new ArrayList<Field>();
+        else
+            this.groupsMap = new HashMap<Field, ArrayList<Field>>();
     }
 
     /**
@@ -48,15 +53,22 @@ public class IntegerAggregator implements Aggregator {
      *            the Tuple containing an aggregate field and a group-by field
      */
     public void mergeTupleIntoGroup(Tuple tup) {
-    	IntField key;
-        if (this.gbfield == Aggregator.NO_GROUPING) {
-        	key = new IntField(Aggregator.NO_GROUPING);
-        } else {
-        	key = (IntField) tup.getField(this.gbfield);
+        if(this.gbfield == Aggregator.NO_GROUPING)
+            nogroupsList.add(tup.getField(this.afield));
+
+        else{
+            Field theGroup = tup.getField(this.gbfield);
+            Field theValue = tup.getField(this.afield);
+
+            ArrayList<Field> valuesList = groupsMap.get(theGroup);
+            if(valuesList != null)
+                valuesList.add(theValue);
+            else{
+                valuesList = new ArrayList<Field>();
+                valuesList.add(theValue);
+            }
+            groupsMap.put(theGroup,valuesList);
         }
-        //System.out.println("key: " + key);
-        //System.out.println("value: " + tup.getField(this.afield));
-        groups.add(new AbstractMap.SimpleEntry<Field, Field>(key, tup.getField(this.afield)));
     }
 
     /**
@@ -68,80 +80,83 @@ public class IntegerAggregator implements Aggregator {
      *         the constructor.
      */
     public DbIterator iterator() {
-    	Tuple tuple = null;
-    	TupleDesc td = null;
-    	ArrayList<Tuple> tuples = new ArrayList<Tuple>();
-        this.aggregates = new HashMap<Field, Field>();
-        
-        // populate aggregates hashmap
-        calculateAggregate(this.groups, this.aggregates, this.op);
-        Set<Map.Entry<Field, Field>> set = this.aggregates.entrySet();
-        
-        IntField noGB = new IntField(Aggregator.NO_GROUPING);
-        if (this.aggregates.containsKey(noGB)) {
-        	td = new TupleDesc(new Type[]{Type.INT_TYPE});
-        	tuple = new Tuple(td);
-        	tuple.setField(0, noGB);
-        } else {
-        	for (Map.Entry<Field, Field> item : set) {
-        		IntField key = (IntField) item.getKey();
-        		IntField value = (IntField) item.getValue();
-        		
-        		td = new TupleDesc(new Type[]{Type.INT_TYPE, Type.INT_TYPE});
-        		tuple = new Tuple(td);
-        		tuple.setField(0, key);
-        		tuple.setField(1, value);
-        		tuples.add(tuple);
-        	}
+        if(this.gbfield == Aggregator.NO_GROUPING){
+            int aggResult = calcAgg(nogroupsList);
+
+            TupleDesc td = new TupleDesc(new Type[]{Type.INT_TYPE});
+            Tuple t = new Tuple(td);
+            t.setField(0, new IntField(aggResult));
+
+            ArrayList<Tuple> tupArr = new ArrayList<Tuple>();
+            tupArr.add(t);
+            return new TupleIterator(td, tupArr);
         }
-        return new TupleIterator(td, tuples);
+
+        else{
+            ArrayList<Tuple> tupArr = new ArrayList<Tuple>();
+            TupleDesc td = new TupleDesc(new Type[]{gbfieldtype, Type.INT_TYPE});
+
+            Set keys = groupsMap.keySet();
+            Iterator<Field> keysIterator = keys.iterator();
+            while(keysIterator.hasNext()){
+                Field f = keysIterator.next();
+                ArrayList valuesList = groupsMap.get(f);
+                int aggResult = calcAgg(valuesList);
+
+                Tuple t = new Tuple(td);
+                t.setField(0, f);
+                t.setField(1, new IntField(aggResult));
+                tupArr.add(t);
+            }
+
+            return new TupleIterator(td, tupArr);
+        }
     }
-    
-    private void calculateAggregate(ArrayList<Map.Entry<Field, Field>> groups, HashMap<Field, Field> aggregates, Aggregator.Op op) {
-    	HashMap<IntField, Integer> counter = new HashMap<IntField, Integer>(); 
-    	
-    	for (Map.Entry<Field, Field> group : groups) {
-    		IntField key = (IntField) group.getKey();
-            //System.out.println(group.getValue());
-            IntField value = (IntField) group.getValue();
-    		IntField agg = (IntField) aggregates.get(key);
-    		
-    		// if first item
-    		if (agg == null) {
-    			if (op == Aggregator.Op.COUNT) {
-    				value = new IntField(1);
-    			} else if (op == Aggregator.Op.AVG) {
-    				counter.put(key, 1);
-    			}
-    			aggregates.put(key, value);
-    			
-    		// if there are existing aggregates
-    		} else {
-    			// sum case
-    			if (op == Aggregator.Op.SUM) {
-    				aggregates.put(key, new IntField(value.getValue() + agg.getValue()));
-    			// max case
-    			} else if (op == Aggregator.Op.MAX){
-    				if (agg.compare(Predicate.Op.LESS_THAN, value)) {
-    					aggregates.put(key, value);
-    				}
-    			// min case
-    			} else if (op == Aggregator.Op.MIN) {
-    				if (agg.compare(Predicate.Op.GREATER_THAN, value)) {
-    					aggregates.put(key, value);
-    				}
-    			// count case
-    			} else if (op == Aggregator.Op.COUNT) {
-    				aggregates.put(key, new IntField(agg.getValue() + 1));
-    			// avg case
-    			} else if (op == Aggregator.Op.AVG) {
-    				Integer count = counter.get(key);
-    				int avg = (value.getValue() + count * agg.getValue()) / (count + 1); 
-    				aggregates.put(key, new IntField(avg));
-    				counter.put(key, count + 1);
-    			}
-    		}
-    	}
+
+    private int calcAgg(ArrayList<Field> valuesList){
+        int result;
+        if(this.op == Op.COUNT)
+            result = valuesList.size();
+        else{
+            Iterator<Field> valuesIt = valuesList.iterator();
+
+            if(this.op == Op.SUM){
+                int sum = 0;
+                while(valuesIt.hasNext()){
+                    IntField f = (IntField) valuesIt.next();
+                    sum = sum + f.getValue();
+                }
+                result = sum;
+            }
+            else if(this.op == Op.AVG){
+                int sum = 0;
+                while(valuesIt.hasNext()){
+                    IntField f = (IntField) valuesIt.next();
+                    sum = sum + f.getValue();
+                }
+                result = sum/valuesList.size();
+            }
+            else if(this.op == Op.MAX){
+                int max = -99999;
+                while(valuesIt.hasNext()){
+                    IntField f = (IntField) valuesIt.next();
+                    if(f.getValue() > max)
+                        max = f.getValue();
+                }
+                result = max;
+            }
+            else{
+                int min = 99999;
+                while(valuesIt.hasNext()){
+                    IntField f = (IntField) valuesIt.next();
+                    if(f.getValue() < min)
+                        min = f.getValue();
+                }
+                result = min;
+            }
+        }
+
+        return result;
     }
 
 }

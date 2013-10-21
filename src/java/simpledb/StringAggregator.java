@@ -17,9 +17,6 @@ public class StringAggregator implements Aggregator {
     private HashMap<Field, ArrayList<Field>> groupsMap;
     private ArrayList<Field> nogroupsList;
 
-    //private ArrayList<Map.Entry<Field, Field>> groups;
-    //private HashMap<Field, Field> aggregates;
-
     /**
      * Aggregate constructor
      * @param gbfield the 0-based index of the group-by field in the tuple, or NO_GROUPING if there is no grouping
@@ -39,8 +36,6 @@ public class StringAggregator implements Aggregator {
             nogroupsList = new ArrayList<Field>();
         else
             this.groupsMap = new HashMap<Field, ArrayList<Field>>();
-
-        //this.groups = new ArrayList<Map.Entry<Field, Field>>();
     }
 
     /**
@@ -64,15 +59,6 @@ public class StringAggregator implements Aggregator {
             }
             groupsMap.put(theGroup,valuesList);
         }
-
-
-//    	Field key;
-//        if (this.gbfield == Aggregator.NO_GROUPING) {
-//        	key = new IntField(Aggregator.NO_GROUPING);
-//        } else {
-//        	key = tup.getField(this.gbfield);
-//        }
-//        groups.add(new AbstractMap.SimpleEntry<Field, Field>(key, tup.getField(this.afield)));
     }
 
     /**
@@ -115,54 +101,6 @@ public class StringAggregator implements Aggregator {
 
             return new TupleIterator(td, tupArr);
         }
-
-
-//    	Tuple tuple = null;
-//    	TupleDesc td = null;
-//    	ArrayList<Tuple> tuples = new ArrayList<Tuple>();
-//        this.aggregates = new HashMap<Field, Field>();
-//
-//        // populate aggregates hashmap
-//        calculateAggregate(this.groups, this.aggregates, this.op);
-//        Set<Map.Entry<Field, Field>> set = this.aggregates.entrySet();
-//
-//        IntField noGB = new IntField(Aggregator.NO_GROUPING);
-//        if (this.aggregates.containsKey(noGB)) {
-//        	td = new TupleDesc(new Type[]{Type.INT_TYPE});
-//        	tuple = new Tuple(td);
-//        	tuple.setField(0, noGB);
-//        } else {
-//        	for (Map.Entry<Field, Field> item : set) {
-//        		String attr;
-//            Field key = item.getKey();
-//            if (key.getType() != Type.STRING_TYPE) {
-//               attr = ((IntField) key).getValue() + "";
-//            } else {
-//                attr = ((StringField) key).getValue();
-//            }
-//            IntField value = (IntField) item.getValue();
-//
-//        		td = new TupleDesc(new Type[]{Type.STRING_TYPE, Type.INT_TYPE});
-//        		tuple = new Tuple(td);
-//        		tuple.setField(0, new StringField(attr, attr.length()));
-//        		tuple.setField(1, value);
-//        		tuples.add(tuple);
-//        	}
-//        }
-//        return new TupleIterator(td, tuples);
     }
-    
-    private void calculateAggregate(ArrayList<Map.Entry<Field, Field>> groups, HashMap<Field, Field> aggregates, Aggregator.Op op) {
-    	for (Map.Entry<Field, Field> group : groups) {
-    		Field key = group.getKey();
-        //System.out.println(key.toString());
-    		IntField value = new IntField(1);
-    		IntField agg = (IntField) aggregates.get(key);
-    		if (agg == null) {
-    			aggregates.put(key, value);
-    		} else {
-    			aggregates.put(key, new IntField(agg.getValue() + 1)); 
-    		}
-    	}
-    }
+
 }
