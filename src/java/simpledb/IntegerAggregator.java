@@ -54,6 +54,8 @@ public class IntegerAggregator implements Aggregator {
         } else {
         	key = (IntField) tup.getField(this.gbfield);
         }
+        //System.out.println("key: " + key);
+        //System.out.println("value: " + tup.getField(this.afield));
         groups.add(new AbstractMap.SimpleEntry<Field, Field>(key, tup.getField(this.afield)));
     }
 
@@ -100,7 +102,8 @@ public class IntegerAggregator implements Aggregator {
     	
     	for (Map.Entry<Field, Field> group : groups) {
     		IntField key = (IntField) group.getKey();
-    		IntField value = (IntField) group.getValue();
+            //System.out.println(group.getValue());
+            IntField value = (IntField) group.getValue();
     		IntField agg = (IntField) aggregates.get(key);
     		
     		// if first item

@@ -22,7 +22,7 @@ public class Aggregate extends Operator {
      * Constructor.
      * 
      * Implementation hint: depending on the type of afield, you will want to
-     * construct an {@link IntAggregator} or {@link StringAggregator} to help
+     * construct an {@link IntegerAggregator} or {@link StringAggregator} to help
      * you with your implementation of readNext().
      * 
      * 
@@ -49,7 +49,10 @@ public class Aggregate extends Operator {
      *         {@link simpledb.Aggregator#NO_GROUPING}
      * */
     public int groupField() {
-	    return this.gfield;
+	    if(this.gfield == -1)
+            return Aggregator.NO_GROUPING;
+        else
+            return this.gfield;
     }
 
     /**
@@ -58,11 +61,10 @@ public class Aggregate extends Operator {
      *         null;
      * */
     public String groupFieldName() {
-    	if (this.gfield == Aggregator.NO_GROUPING) {
+    	if (this.gfield == Aggregator.NO_GROUPING)
     		return null;
-    	}
-    	return this.input.getTupleDesc().getFieldName(this.gfield);
-	
+    	else
+            return this.input.getTupleDesc().getFieldName(this.gfield);
     }
 
     /**
@@ -92,31 +94,29 @@ public class Aggregate extends Operator {
     }
     
     public void open() throws IOException, NoSuchElementException, DbException, TransactionAbortedException {
-	    Type type;
-	    DbIterator input = this.input;
-	    if (this.gfield == Aggregator.NO_GROUPING) {
-	    	type = Type.INT_TYPE;
-	    } else {
-	    	type = input.getTupleDesc().getFieldType(this.gfield);
-	    } 
-	   
-      super.open();
-	    input.open();
-	    if (type == Type.INT_TYPE) {
-	    	IntegerAggregator agg = new IntegerAggregator(this.gfield, Type.INT_TYPE, this.afield, this.aop);
-	    	while (input.hasNext()) {
-	    		agg.mergeTupleIntoGroup(input.next());
-	    	}
-	    	this.aggregator = agg.iterator();
-	    } else if (type == Type.STRING_TYPE) {
-	    	StringAggregator agg = new StringAggregator(this.gfield, Type.STRING_TYPE, this.afield, this.aop);
-	    	while (input.hasNext()) {
-	    		agg.mergeTupleIntoGroup(input.next());
-	    	}
-	    	this.aggregator = agg.iterator();
+	    Type aggType = this.input.getTupleDesc().getFieldType(this.afield);
+        Type groupByType = null;
+        if (this.groupField() != Aggregator.NO_GROUPING)
+            groupByType = this.input.getTupleDesc().getFieldType(this.gfield);
+
+        this.input.open();
+        super.open();
+
+        Aggregator agg;
+	    if (aggType == Type.INT_TYPE) {
+	    	agg = new IntegerAggregator(this.gfield, groupByType, this.afield, this.aop);
+	    	while (this.input.hasNext())
+	    		agg.mergeTupleIntoGroup(this.input.next());
 	    }
-	    input.close();
-      this.aggregator.open();
+        else {
+	    	agg = new StringAggregator(this.gfield, groupByType, this.afield, this.aop);
+	    	while (this.input.hasNext())
+	    		agg.mergeTupleIntoGroup(this.input.next());
+	    }
+        this.input.close();
+
+        this.aggregator = agg.iterator();
+        this.aggregator.open();
     }
 
     /**
@@ -128,11 +128,10 @@ public class Aggregate extends Operator {
      */
     protected Tuple fetchNext() throws IOException, TransactionAbortedException, DbException {
 	    Tuple tuple = null;
-	    if (this.aggregator.hasNext()) {
+	    if (this.aggregator.hasNext())
 	    	tuple = this.aggregator.next();
-	    }
+
 	    return tuple;
-	    	
     }
 
     public void rewind() throws IOException, DbException, TransactionAbortedException {
@@ -155,17 +154,21 @@ public class Aggregate extends Operator {
 	    TupleDesc td = this.input.getTupleDesc();
 	    Type atype = td.getFieldType(this.afield);
 	    String aname = td.getFieldName(this.afield);
-	    if (this.gfield == Aggregator.NO_GROUPING) {
+
+	    if (this.groupField() == Aggregator.NO_GROUPING)
 	    	result = new TupleDesc(new Type[]{atype}, new String[]{aname});
-	    } else {
+
+        else {
 	    	Type gtype = td.getFieldType(this.gfield);
 	    	String gname = td.getFieldName(this.gfield);
 	    	result = new TupleDesc(new Type[]{atype, gtype}, new String[]{aname, gname});
 	    }
-	    return result;
+
+        return result;
     }
 
     public void close() {
+        super.close();
 	    this.aggregator.close();
     }
 
