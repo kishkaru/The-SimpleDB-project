@@ -2,6 +2,9 @@ package simpledb;
 
 import java.io.*;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * BufferPool manages the reading and writing of pages into memory from
@@ -20,7 +23,8 @@ public class BufferPool {
     other classes. BufferPool should use the numPages argument to the
     constructor instead. */
     public static final int DEFAULT_PAGES = 50;
-    private HashMap<Integer, Page> theBufferPool;
+
+    private HashMap<PageId, Page> theBufferPool;
     private int maxNumPages;
 
     /**
@@ -32,8 +36,22 @@ public class BufferPool {
         if(numPages < 1)
             throw new IllegalArgumentException(String.valueOf(numPages));
         else{
-            theBufferPool = new HashMap<Integer, Page>((int) (numPages/0.75));
             maxNumPages = numPages;
+            this.theBufferPool = new LinkedHashMap<PageId, Page>(maxNumPages+1, 0.75F, true) {
+                public boolean removeEldestEntry(Map.Entry oldest) {
+                    boolean removeOldest = this.size() > maxNumPages;
+
+                    if (removeOldest) {
+                        try {
+                            flushPage((PageId) oldest.getKey());
+                        } catch (IOException e) {
+                            System.err.println(e);
+                        }
+                    }
+
+                    return removeOldest;
+                }
+            };
         }
     }
 
@@ -55,18 +73,16 @@ public class BufferPool {
     public Page getPage(TransactionId tid, PageId pid, Permissions perm)
         throws TransactionAbortedException, DbException, FileNotFoundException, IOException{
 
-        int hashCode = pid.hashCode();
-        Page readPage = theBufferPool.get(pid.hashCode());
+        //int hashCode = pid.hashCode();
+        Page readPage = theBufferPool.get(pid);
         if(readPage != null)
             return readPage;
-        else if(maxNumPages < 1)
-            throw new DbException("BufferPool full");
         else{
             Page newpage = Database.getCatalog().getDbFile(pid.getTableId()).readPage(pid);
-            theBufferPool.put(hashCode, newpage);
-            maxNumPages--;
-            return theBufferPool.get(hashCode);
-            }
+            theBufferPool.put(pid, newpage);
+            //maxNumPages--;
+            return newpage;
+        }
     }
 
     /**
@@ -129,8 +145,8 @@ public class BufferPool {
      */
     public void insertTuple(TransactionId tid, int tableId, Tuple t)
         throws DbException, IOException, TransactionAbortedException {
-        // some code goes here
-        // not necessary for proj1
+        DbFile file = Database.getCatalog().getDbFile(tableId);
+        file.insertTuple(tid, t);
     }
 
     /**
@@ -147,9 +163,11 @@ public class BufferPool {
      * @param t the tuple to add
      */
     public  void deleteTuple(TransactionId tid, Tuple t)
-        throws DbException, TransactionAbortedException {
-        // some code goes here
-        // not necessary for proj1
+        throws DbException, TransactionAbortedException, IOException {
+
+        int tableId = t.getRecordId().getPageId().getTableId();
+        DbFile file = Database.getCatalog().getDbFile(tableId);
+        file.deleteTuple(tid, t);
     }
 
     /**
@@ -158,9 +176,9 @@ public class BufferPool {
      *     break simpledb if running in NO STEAL mode.
      */
     public synchronized void flushAllPages() throws IOException {
-        // some code goes here
-        // not necessary for proj1
-
+        Iterator<PageId> theIterator = theBufferPool.keySet().iterator();
+        while(theIterator.hasNext())
+            flushPage(theIterator.next());
     }
 
     /** Remove the specific page id from the buffer pool.
@@ -169,8 +187,7 @@ public class BufferPool {
         cache.
     */
     public synchronized void discardPage(PageId pid) {
-        // some code goes here
-	// not necessary for proj1
+        this.theBufferPool.remove(pid);
     }
 
     /**
@@ -178,8 +195,13 @@ public class BufferPool {
      * @param pid an ID indicating the page to flush
      */
     private synchronized  void flushPage(PageId pid) throws IOException {
-        // some code goes here
-        // not necessary for proj1
+        DbFile file = Database.getCatalog().getDbFile(pid.getTableId());
+        Page page = file.readPage(pid);
+
+        if (page.isDirty() != null) {
+            page.markDirty(false, page.isDirty());
+            file.writePage(page);
+        }
     }
 
     /** Write all pages of the specified transaction to disk.
