@@ -75,10 +75,13 @@ public class BufferPool {
 
         //int hashCode = pid.hashCode();
         Page readPage = theBufferPool.get(pid);
-        if(readPage != null)
+        if(readPage != null){
+            theBufferPool.put(pid, readPage);
             return readPage;
+        }
         else{
             Page newpage = Database.getCatalog().getDbFile(pid.getTableId()).readPage(pid);
+            newpage.markDirty(false,tid);
             theBufferPool.put(pid, newpage);
             //maxNumPages--;
             return newpage;

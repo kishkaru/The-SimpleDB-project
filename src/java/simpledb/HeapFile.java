@@ -130,13 +130,6 @@ public class HeapFile implements DbFile {
             newPage.insertTuple(t);
             newPage.markDirty(true,tid);
             pageList.add(newPage);
-
-            //this.writePage(newPage);
-            //newData = newPage.getPageData();
-
-            //FileOutputStream theFile = new FileOutputStream(file, true);
-            //theFile.write(newData);
-            //theFile.close();
         }
 
         return pageList;

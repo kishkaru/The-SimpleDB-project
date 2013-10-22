@@ -1,5 +1,5 @@
 package simpledb; 
-import java.util.*; 
+import java.util.*;
 
 public class HeapIterator implements DbFileIterator{
 
@@ -28,8 +28,12 @@ public class HeapIterator implements DbFileIterator{
         else if(tupleIterator.hasNext())
             result =  true;
         else if(currPage < pagesList.size() - 1) {
-            result = true;
-        }
+            for(int i= currPage; i<pagesList.size(); i++){
+                Iterator<Tuple>  tt = ((HeapPage) (pagesList.get(i))).iterator();
+                if(tt.hasNext())
+                    return true;
+            }
+          }
 
         return result;
     }
@@ -50,7 +54,7 @@ public class HeapIterator implements DbFileIterator{
             currPage++;
             if (currPage >= pagesList.size()) {
                 throw new NoSuchElementException(String.valueOf(currPage));
-            } 
+            }
             Page nextPage = pagesList.get(currPage);
             tupleIterator = ((HeapPage) nextPage).iterator();
             return tupleIterator.next();

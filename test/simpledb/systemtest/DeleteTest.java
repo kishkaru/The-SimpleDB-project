@@ -12,6 +12,8 @@ public class DeleteTest extends FilterBase {
     @Override
     protected int applyPredicate(HeapFile table, TransactionId tid, Predicate predicate)
             throws DbException, TransactionAbortedException, IOException {
+        //System.out.println();
+        //System.out.println("applying pred: " + predicate.toString());
         SeqScan ss = new SeqScan(tid, table.getId(), "");
         Filter filter = new Filter(predicate, ss);
         Delete deleteOperator = new Delete(tid, filter);
@@ -23,6 +25,8 @@ public class DeleteTest extends FilterBase {
         int result = -1;
         while (deleteOperator.hasNext()) {
             Tuple t = deleteOperator.next();
+            //System.out.println("del tuple: " + t.getTupleDesc().toString() + " " + t.getField(0));
+            //System.out.println("hasResult? " + hasResult);
             assertFalse(hasResult);
             hasResult = true;
             assertEquals(SystemTestUtil.SINGLE_INT_DESCRIPTOR, t.getTupleDesc());
