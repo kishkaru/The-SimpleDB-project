@@ -86,7 +86,7 @@ public class StringAggregator implements Aggregator {
             ArrayList<Tuple> tupArr = new ArrayList<Tuple>();
             TupleDesc td = new TupleDesc(new Type[]{gbfieldtype, Type.INT_TYPE});
 
-            Set keys = groupsMap.keySet();
+            Set<Field> keys = groupsMap.keySet();
             Iterator<Field> keysIterator = keys.iterator();
             while(keysIterator.hasNext()){
                 Field f = keysIterator.next();

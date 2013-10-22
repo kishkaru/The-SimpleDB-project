@@ -12,11 +12,18 @@ public class HeapIterator implements DbFileIterator{
     }
 
     public void open() throws DbException, TransactionAbortedException{
-        if(pagesList.size() == 0)
-            throw new DbException("There are no pages in the pagesList!");
-
-        Page firstPage = pagesList.get(0);
-        tupleIterator = ((HeapPage) firstPage).iterator();
+        if(pagesList.size() == 0){
+            //throw new DbException("There are no pages in the pagesList!");
+            TupleDesc td = new TupleDesc(new Type[]{Type.INT_TYPE});
+            Tuple t = new Tuple(td);
+            ArrayList<Tuple> theList = new ArrayList<Tuple>();
+            theList.add(t);
+            tupleIterator =  theList.iterator();
+        }
+        else{
+            Page firstPage = pagesList.get(0);
+            tupleIterator = ((HeapPage) firstPage).iterator();
+        }
     }
 
     /** @return true if there are more tuples available. */

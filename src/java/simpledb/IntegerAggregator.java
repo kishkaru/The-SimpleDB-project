@@ -96,11 +96,11 @@ public class IntegerAggregator implements Aggregator {
             ArrayList<Tuple> tupArr = new ArrayList<Tuple>();
             TupleDesc td = new TupleDesc(new Type[]{gbfieldtype, Type.INT_TYPE});
 
-            Set keys = groupsMap.keySet();
+            Set<Field> keys = groupsMap.keySet();
             Iterator<Field> keysIterator = keys.iterator();
             while(keysIterator.hasNext()){
                 Field f = keysIterator.next();
-                ArrayList valuesList = groupsMap.get(f);
+                ArrayList<Field> valuesList = groupsMap.get(f);
                 int aggResult = calcAgg(valuesList);
 
                 Tuple t = new Tuple(td);
