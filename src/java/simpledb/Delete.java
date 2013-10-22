@@ -12,6 +12,7 @@ public class Delete extends Operator {
 
     private TransactionId tid;
     private DbIterator child;
+    private boolean done = false;
     /**
      * Constructor specifying the transaction that this delete belongs to as
      * well as the child to read from.
@@ -54,20 +55,30 @@ public class Delete extends Operator {
      * @see BufferPool#deleteTuple
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException, IOException {
-        BufferPool theBuffer = Database.getBufferPool();
-
-        int count = 0;
-        while(child.hasNext()){
-            Tuple tupe = child.next();
-            theBuffer.deleteTuple(this.tid, tupe);
-            count++;
-        }
-
+        Tuple result;
         Type[] t = new Type[1];
         t[0] = Type.INT_TYPE;
-        Tuple result = new Tuple(new TupleDesc(t));
-        result.setField(0, new IntField(count));
+        result = new Tuple(new TupleDesc(t));
+        result.setField(0, new IntField(0));
+        System.out.println("done?: " + done);
 
+        if(!done){
+            System.out.println("inside");
+            done = true;
+            BufferPool theBuffer = Database.getBufferPool();
+
+            int count = 0;
+            while(child.hasNext()){
+                Tuple tupe = child.next();
+                theBuffer.deleteTuple(this.tid, tupe);
+                count++;
+                //theBuffer.getPage(this.tid,tupe.getRecordId().getPageId(),Permissions.READ_WRITE);
+            }
+
+            result.setField(0, new IntField(count));
+        }
+
+        System.out.println("field 1 value: " + result.getField(0));
         return result;
     }
 
