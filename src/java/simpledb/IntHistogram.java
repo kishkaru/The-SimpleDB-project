@@ -1,8 +1,17 @@
 package simpledb;
 
+import java.util.*;
+
 /** A class to represent a fixed-width histogram over a single integer-based field.
  */
 public class IntHistogram {
+
+    private int numBuckets;
+    private int min;
+    private int max;
+    private int range;
+    private int tuples;
+    private HashMap<Integer, Integer> buckets; 
 
     /**
      * Create a new IntHistogram.
@@ -21,15 +30,51 @@ public class IntHistogram {
      * @param max The maximum integer value that will ever be passed to this class for histogramming
      */
     public IntHistogram(int buckets, int min, int max) {
-    	// some code goes here
+        this.numBuckets = buckets;
+        this.min = min;
+        this.max = max;
+        this.tuples = 0;
+        this.range = (max - min) / buckets;
+        this.buckets = new HashMap<Integer,Integer>(buckets);
     }
+
+    private int index(int v) {
+        int index = (v - min) / range;
+        return index;
+    } 
 
     /**
      * Add a value to the set of values that you are keeping a histogram of.
      * @param v Value to add to the histogram
      */
     public void addValue(int v) {
-    	// some code goes here
+        int value = buckets.get(index(v));
+        buckets.put(index(v), value +_1);
+    	tuples++;
+    }
+
+    private double eqSelect(int v) {
+        if ((v < min) || (v > max)) {
+            return 0.0;
+        }
+        return buckets[index(v)] / (range * tuples);
+    }
+
+    private double gtSelect(int v) {
+        // if value smaller than min, everything will be greater
+        if (v < min) 
+            return 1.0;
+
+        // if value larger than max, nothing will be greater
+        if (v > max) 
+            return 0.0;
+        
+        int index = index(v);
+        double gtBuckets = 0.0;
+        for (int i = index + 1; i < numBuckets; i++) {
+            gtBuckets += (double) buckets.get(i) / tuples;
+        }
+         
     }
 
     /**
@@ -43,9 +88,28 @@ public class IntHistogram {
      * @return Predicted selectivity of this particular operator and value
      */
     public double estimateSelectivity(Predicate.Op op, int v) {
+        double select = 0.0;
 
-    	// some code goes here
-        return -1.0;
+    	if (op == Predicate.Op.EQUALS) {
+            select = eqSelect(v);
+        }
+        if (op == Predicate.Op.GREATER_THAN) {
+            select = gtSelect(v);
+        }
+        if (op == Predicate.Op.LESS_THAN) {
+            select = 1.0 - gtSelect(v) - eqSelect(v);
+        }
+        if (op == Predicate.Op.GREATER_THAN_OR_EQ) {
+            select = gtSelect(v) + eqSelect(v);
+        }
+        if (op == Predicate.Op.LESS_THAN_OR_EQ) {
+            select =  1.0 - gtSelect(v);
+        }
+        if (op == Predicate.Op.NOT_EQUALS) {
+            select = 1.0 - eqSelect(v);
+        }
+
+        return select;
     }
     
     /**
