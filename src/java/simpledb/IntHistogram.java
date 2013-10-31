@@ -1,6 +1,7 @@
 package simpledb;
 
 import java.util.*;
+import java.lang.*;
 
 /** A class to represent a fixed-width histogram over a single integer-based field.
  */
@@ -131,12 +132,13 @@ public class IntHistogram {
      * @return A string describing this histogram, for debugging purposes
      */
     public String toString() {
-        String heights = "| " + buckets[0].toString() + " | ";
-        String leftEdges = "| " + min.toString() + " | ";
+        String heights = "| " + String.valueOf(buckets[0]) + " | ";
+        String leftEdges = "| " + String.valueOf(min) + " | ";
         for (int i = 1; i < numBuckets; i++) {
-            int height = buckets[i]; 
+            Integer height = new Integer(buckets[i]);
             heights = heights + height.toString() + " | ";
-            int leftEdge = min + (i * range) + 1;
+            int size = (int) bucketSize;
+            Integer leftEdge = new Integer(min + (i * size) + 1);
             leftEdges = leftEdges + leftEdge.toString() + " | ";
         }
         return heights + "\n" + leftEdges;
