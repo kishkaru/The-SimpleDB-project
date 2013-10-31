@@ -34,12 +34,13 @@ public class IntHistogram {
         this.min = min;
         this.max = max;
         this.tuples = 0;
-        this.range = (max - min) / buckets;
+        this.range = (max - min) / buckets; // diff
         this.buckets = new HashMap<Integer,Integer>(buckets);
     }
 
     private int index(int v) {
-        int index = (v - min) / range;
+        int index = (v - min) / range; // diff 
+        // insert check 
         return index;
     } 
 
@@ -49,7 +50,7 @@ public class IntHistogram {
      */
     public void addValue(int v) {
         int value = buckets.get(index(v));
-        buckets.put(index(v), value +_1);
+        buckets.put(index(v), value + 1);
     	tuples++;
     }
 
@@ -57,7 +58,7 @@ public class IntHistogram {
         if ((v < min) || (v > max)) {
             return 0.0;
         }
-        return buckets[index(v)] / (range * tuples);
+        return buckets.get(index(v)) / (range * tuples); // diff
     }
 
     private double gtSelect(int v) {
@@ -70,11 +71,13 @@ public class IntHistogram {
             return 0.0;
         
         int index = index(v);
-        double gtBuckets = 0.0;
+        int b_right = (index + 1) * range;
+        double b_part = (b_right - v) / range;
+        double b_fs = 0.0; // diff
         for (int i = index + 1; i < numBuckets; i++) {
-            gtBuckets += (double) buckets.get(i) / tuples;
+            b_fs += (double) buckets.get(i) / tuples;
         }
-         
+        return b_fs * b_part;
     }
 
     /**
@@ -120,8 +123,7 @@ public class IntHistogram {
      *     join optimization. It may be needed if you want to
      *     implement a more efficient optimization
      * */
-    public double avgSelectivity()
-    {
+    public double avgSelectivity() {
         // some code goes here
         return 1.0;
     }
@@ -130,8 +132,7 @@ public class IntHistogram {
      * @return A string describing this histogram, for debugging purposes
      */
     public String toString() {
-
-        // some code goes here
+        
         return null;
     }
 }
