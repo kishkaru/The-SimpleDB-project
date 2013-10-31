@@ -132,7 +132,14 @@ public class IntHistogram {
      * @return A string describing this histogram, for debugging purposes
      */
     public String toString() {
-        
-        return null;
+        String heights = "| " + buckets[0].toString() + " | ";
+        String leftEdges = "| " + min.toString() + " | ";
+        for (int i = 1; i < numBuckets; i++) {
+            int height = buckets[i]; 
+            heights = heights + height.toString() + " | ";
+            int leftEdge = min + (i * range) + 1;
+            leftEdges = leftEdges + leftEdge.toString() + " | ";
+        }
+        return heights + "\n" + leftEdges;
     }
 }
