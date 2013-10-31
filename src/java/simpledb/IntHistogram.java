@@ -11,7 +11,7 @@ public class IntHistogram {
     private int max;
     private double bucketSize;
     private int tuples;
-    private HashMap<Integer, Integer> buckets; 
+    private int[] buckets;
 
     /**
      * Create a new IntHistogram.
@@ -34,22 +34,17 @@ public class IntHistogram {
         this.min = min;
         this.max = max;
         this.tuples = 0;
-        this.bucketSize = (max - min) / (double) buckets; // diff
-        this.buckets = new HashMap<Integer,Integer>(buckets);
+        this.bucketSize = (max - min) / (double) buckets;
+        this.buckets = new int[buckets];
     }
 
     private int index(int v) {
-        int index = (int) ((v - min) / bucketSize); // diff
-        int that;
+        int index = (int) ((v - min) / bucketSize);
 
         if(index == this.numBuckets && index > 0)
-            that =  index-1;
-        else
-            that =  index;
+            index =  index - 1;
 
-
-        //System.out.println(that);
-        return that;
+        return index;
     } 
 
     /**
@@ -57,22 +52,16 @@ public class IntHistogram {
      * @param v Value to add to the histogram
      */
     public void addValue(int v) {
-        if(buckets.get(index(v)) != null) {
-            int height = buckets.get(index(v));
-            buckets.put(index(v), height + 1);
-        }
-        else
-            buckets.put(index(v), 1);
-
+        buckets[index(v)]++;
     	tuples++;
     }
 
     private double eqSelect(int v) {
-        if ((v < min) || (v > max) || (buckets.get(index(v)) == null)) {
+        if ((v < min) || (v > max)) {
             return 0.0;
         }
 
-        return ((buckets.get(index(v))) / bucketSize) / tuples;
+        return (buckets[index(v)] / bucketSize) / tuples;
     }
 
     private double gtSelect(int v) {
@@ -83,25 +72,17 @@ public class IntHistogram {
         // if value larger than max, nothing will be greater
         if (v > max) 
             return 0.0;
-        
+
         int index = index(v);
-        int b_right = (int) ((index + 1) * bucketSize);
+        double b_right = (index + 1 * bucketSize);
         double b_part = (b_right - v) / bucketSize;
-        double b_fs = 0.0; // diff
-//
-//        Set<Integer> aa = buckets.keySet();
-//        Iterator<Integer> it = aa.iterator();
-//        Integer[] keys = (Integer[]) aa.toArray();
-
-
-//        while(it.hasNext())
-//            b_fs += (double) it.next() / tuples;
+        double b_fs = 0.0;
 
         for (int i = index + 1; i < numBuckets; i++) {
-            System.out.println(buckets.get(i));
-            b_fs += (double) buckets.get(i) / tuples;
+            b_fs += (double) buckets[i] / tuples;
         }
-        return b_fs * b_part;
+
+        return ((buckets[index]/tuples) * b_part)  + b_fs;
     }
 
     /**
@@ -129,9 +110,6 @@ public class IntHistogram {
             select =  1.0 - gtSelect(v);
         if (op == Predicate.Op.NOT_EQUALS)
             select = 1.0 - eqSelect(v);
-
-        //if(select == 0.0)
-            //throw new IllegalArgumentException("OP IS BAD: NOT ONE OF DEFINED");
 
         return select;
     }
