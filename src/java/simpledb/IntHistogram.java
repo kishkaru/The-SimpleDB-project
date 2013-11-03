@@ -100,13 +100,18 @@ public class IntHistogram {
         if (op == Predicate.Op.GREATER_THAN)
             selectivity = gtSelect(v);
         if (op == Predicate.Op.LESS_THAN)
-            selectivity = 1.0 - gtSelect(v) - eqSelect(v);
-        if (op == Predicate.Op.GREATER_THAN_OR_EQ)
-            selectivity = gtSelect(v) + eqSelect(v);
+            selectivity = 1.0 - gtSelect(v);
         if (op == Predicate.Op.LESS_THAN_OR_EQ)
             selectivity =  1.0 - gtSelect(v);
         if (op == Predicate.Op.NOT_EQUALS)
             selectivity = 1.0 - eqSelect(v);
+        if (op == Predicate.Op.GREATER_THAN_OR_EQ) {
+            selectivity = gtSelect(v) + eqSelect(v);
+            if (selectivity > 1.0)
+                selectivity = 1.0;
+            if (selectivity < 0.0)
+                selectivity = 0.0;
+        }
 
         return selectivity;
     }
