@@ -98,8 +98,10 @@ public class TableStats {
         this.tuples = 0;
         try {
             this.file = Database.getCatalog().getDbFile(tableid);
-            td = file.getTupleDesc();
+            this.td = file.getTupleDesc();
             int fields = td.numFields();
+            intHistograms = new IntHistogram[fields];
+            strHistograms = new StringHistogram[fields];
             DbFileIterator iterator = file.iterator(new TransactionId());
 
             iterator.open();
@@ -156,7 +158,7 @@ public class TableStats {
             }
             iterator.close();
         } catch (Exception e) {
-            e.printStackTrace();
+            //e.printStackTrace();
         }
     }
 
