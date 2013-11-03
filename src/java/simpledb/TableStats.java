@@ -118,6 +118,7 @@ public class TableStats {
                         if (isFirst) {
                             mins[i] = value;
                             maxes[i] = value;
+                            isFirst = false;
                         } else {
                             int min = mins[i];
                             int max = maxes[i];
@@ -130,7 +131,6 @@ public class TableStats {
                     }
 
                 }
-                isFirst = false;
             }
 
             // generate histograms
