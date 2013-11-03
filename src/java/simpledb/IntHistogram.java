@@ -41,10 +41,8 @@ public class IntHistogram {
 
     private int index(int v) {
         int index = (int) ((v - min) / bucketSize);
-
         if(index == this.numBuckets && index > 0)
             index =  index - 1;
-
         return index;
     } 
 
@@ -58,11 +56,9 @@ public class IntHistogram {
     }
 
     private double eqSelect(int v) {
-        if ((v < min) || (v > max)) {
+        if ((v < min) || (v > max))
             return 0.0;
-        }
-
-        return (buckets[index(v)] / bucketSize) / tuples;
+        return (buckets[index(v)] / Math.max(1, bucketSize)) / tuples;
     }
 
     private double gtSelect(int v) {
@@ -83,7 +79,7 @@ public class IntHistogram {
             b_fs += (double) buckets[i] / tuples;
         }
 
-        return ((buckets[index]/tuples) * b_part)  + b_fs;
+        return ((buckets[index] / tuples) * b_part) + b_fs;
     }
 
     /**
@@ -97,22 +93,22 @@ public class IntHistogram {
      * @return Predicted selectivity of this particular operator and value
      */
     public double estimateSelectivity(Predicate.Op op, int v) {
-        double select = 0.0;
+        double selectivity = 0.0;
 
     	if (op == Predicate.Op.EQUALS)
-            select = eqSelect(v);
+            selectivity = eqSelect(v);
         if (op == Predicate.Op.GREATER_THAN)
-            select = gtSelect(v);
+            selectivity = gtSelect(v);
         if (op == Predicate.Op.LESS_THAN)
-            select = 1.0 - gtSelect(v) - eqSelect(v);
+            selectivity = 1.0 - gtSelect(v) - eqSelect(v);
         if (op == Predicate.Op.GREATER_THAN_OR_EQ)
-            select = gtSelect(v) + eqSelect(v);
+            selectivity = gtSelect(v) + eqSelect(v);
         if (op == Predicate.Op.LESS_THAN_OR_EQ)
-            select =  1.0 - gtSelect(v);
+            selectivity =  1.0 - gtSelect(v);
         if (op == Predicate.Op.NOT_EQUALS)
-            select = 1.0 - eqSelect(v);
+            selectivity = 1.0 - eqSelect(v);
 
-        return select;
+        return selectivity;
     }
     
     /**
