@@ -124,8 +124,11 @@ public class IntHistogram {
      *     implement a more efficient optimization
      * */
     public double avgSelectivity() {
-        // some code goes here
-        return 1.0;
+        double total = 0.0;
+        for (int i = 0; i < numBuckets; i++) {
+            total += buckets[i];
+        }
+        return total / numBuckets;
     }
     
     /**
