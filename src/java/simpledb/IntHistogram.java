@@ -41,8 +41,9 @@ public class IntHistogram {
 
     private int index(int v) {
         int index = (int) ((v - min) / bucketSize);
-        if(index == this.numBuckets && index > 0)
+        if(index == this.numBuckets && index > 0) {
             index =  index - 1;
+        }
         return index;
     } 
 
@@ -56,14 +57,15 @@ public class IntHistogram {
     }
 
     private double eqSelect(int v) {
-        if ((v < min) || (v > max))
+        if ((v < min) || (v > max)) {
             return 0.0;
-        return (buckets[index(v)] / Math.max(1, bucketSize)) / tuples;
+        }
+        return (buckets[index(v)] / bucketSize) / tuples;
     }
 
     private double gtSelect(int v) {
         // if value smaller than min, everything will be greater
-        if (v < min) 
+        if (v < min)
             return 1.0;
 
         // if value larger than max, nothing will be greater
@@ -100,17 +102,13 @@ public class IntHistogram {
         if (op == Predicate.Op.GREATER_THAN)
             selectivity = gtSelect(v);
         if (op == Predicate.Op.LESS_THAN)
-            selectivity = 1.0 - gtSelect(v);
+            selectivity = 1.0 - gtSelect(v) - eqSelect(v);
         if (op == Predicate.Op.LESS_THAN_OR_EQ)
             selectivity =  1.0 - gtSelect(v);
         if (op == Predicate.Op.NOT_EQUALS)
             selectivity = 1.0 - eqSelect(v);
         if (op == Predicate.Op.GREATER_THAN_OR_EQ) {
             selectivity = gtSelect(v) + eqSelect(v);
-            if (selectivity > 1.0)
-                selectivity = 1.0;
-            if (selectivity < 0.0)
-                selectivity = 0.0;
         }
 
         return selectivity;
