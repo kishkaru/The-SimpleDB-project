@@ -12,15 +12,17 @@ import java.util.*;
 public class SeqScan implements DbIterator {
 
     private static final long serialVersionUID = 1L;
-    private TransactionId tid;
-    private int tableId;
+
+    private int tableid;
     private String tableAlias;
-    private HeapIterator iterator;
+    private DbFile dbFile;
+    private DbFileIterator it;
+    private TransactionId tid;
 
     /**
      * Creates a sequential scan over the specified table as a part of the
      * specified transaction.
-     * 
+     *
      * @param tid
      *            The transaction this scan is running as a part of.
      * @param tableid
@@ -33,12 +35,15 @@ public class SeqScan implements DbIterator {
      *            are, but the resulting name can be null.fieldName,
      *            tableAlias.null, or null.null).
      */
-    public SeqScan(TransactionId tid, int tableid, String tableAlias) {
-        if (tableAlias == null)
-            tableAlias = "null";
-        this.tid = tid;
-        this.tableId = tableid;
+    public SeqScan(TransactionId tid, int tableid, String tableAlias)
+            throws IOException, FileNotFoundException, DbException, TransactionAbortedException {
+        this.tableid = tableid;
         this.tableAlias = tableAlias;
+        this.dbFile = null;
+        this.tid = tid;
+
+        this.dbFile = Database.getCatalog().getDbFile(tableid);
+        this.it = dbFile.iterator(tid);
     }
 
     /**
@@ -47,14 +52,15 @@ public class SeqScan implements DbIterator {
      *       be the actual name of the table in the catalog of the database
      * */
     public String getTableName() {
-        return Database.getCatalog().getTableName(this.tableId);
+        return Database.getCatalog().getTableName(tableid);
     }
-    
+
     /**
      * @return Return the alias of the table this operator scans. 
      * */
-    public String getAlias() {
-        return this.tableAlias;
+    public String getAlias()
+    {
+        return tableAlias;
     }
 
     /**
@@ -70,30 +76,17 @@ public class SeqScan implements DbIterator {
      *            tableAlias.null, or null.null).
      */
     public void reset(int tableid, String tableAlias) {
-        if (tableAlias == null)
-            tableAlias = "null";
-        this.tableId = tableid;
+        this.tableid = tableid;
         this.tableAlias = tableAlias;
     }
 
-
-    public SeqScan(TransactionId tid, int tableid) {
+    public SeqScan(TransactionId tid, int tableid)
+            throws IOException, TransactionAbortedException, DbException {
         this(tid, tableid, Database.getCatalog().getTableName(tableid));
     }
 
     public void open() throws DbException, TransactionAbortedException, IOException {
-        DbFile dbFile = Database.getCatalog().getDbFile(this.tableId);
-        HeapFile file = (HeapFile) dbFile;
-        ArrayList<Page> pages = new ArrayList<Page>(file.numPages());
-        
-	for (int i = 0; i < file.numPages(); i++) {
-            Page thePage = Database.getBufferPool().getPage(this.tid, new HeapPageId(this.tableId, i), Permissions.READ_WRITE);
-            pages.add(thePage);
-        }
-
-        this.iterator = new HeapIterator(pages);
-        this.iterator.open();
-
+        it.open();
     }
 
     /**
@@ -101,36 +94,48 @@ public class SeqScan implements DbIterator {
      * prefixed with the tableAlias string from the constructor. This prefix
      * becomes useful when joining tables containing a field(s) with the same
      * name.
-     * 
+     *
      * @return the TupleDesc with field names from the underlying HeapFile,
      *         prefixed with the tableAlias string from the constructor.
      */
     public TupleDesc getTupleDesc() {
-        TupleDesc description = Database.getCatalog().getTupleDesc(this.tableId);
-        int numFields = description.numFields();
+        if (dbFile == null)
+            return null;
+
+        TupleDesc fileDesc = dbFile.getTupleDesc();
+        int numFields = fileDesc.numFields();
+
+        String[] names = new String[numFields];
         Type[] types = new Type[numFields];
-        String[] fields = new String[numFields];
+
         for (int i = 0; i < numFields; i++) {
-            types[i] = description.getFieldType(i);
-            fields[i] = this.tableAlias + "." + description.getFieldName(i);
+            types[i] = fileDesc.getFieldType(i);
+            names[i] = tableAlias + "." + fileDesc.getFieldName(i);
         }
-        return new TupleDesc(types, fields);
+
+        return new TupleDesc(types, names);
+
     }
 
-    public boolean hasNext() throws TransactionAbortedException, DbException {
-        return this.iterator.hasNext();
+    private static String nullString(String string) {
+        return (string == null) ? "null" : string;
     }
 
-    public Tuple next() throws NoSuchElementException, TransactionAbortedException, DbException {
-        return this.iterator.next();
+    public boolean hasNext() throws TransactionAbortedException, DbException, IOException {
+        return it.hasNext();
+    }
+
+    public Tuple next() throws NoSuchElementException,
+            TransactionAbortedException, DbException, IOException {
+        return it.next();
     }
 
     public void close() {
-        this.iterator = null;
+        it.close();
     }
 
-    public void rewind() throws DbException, NoSuchElementException, TransactionAbortedException, IOException {
-        this.iterator.close();
-        this.iterator.open();
+    public void rewind() throws DbException, NoSuchElementException,
+            TransactionAbortedException, IOException {
+        it.rewind();
     }
 }
