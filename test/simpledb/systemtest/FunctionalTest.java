@@ -22,7 +22,7 @@ public class FunctionalTest extends SimpleDbTestBase {
     private TransactionId tid1;
     private TransactionId tid2;
 
-    @Before public void loadTable() {
+    @Before public void loadTable() throws DbException, FileNotFoundException, IOException, TransactionAbortedException{
         // construct a 3-column table schema
         Type types[] = new Type[]{ Type.INT_TYPE, Type.INT_TYPE, Type.INT_TYPE };
         String names[] = new String[]{ "field0", "field1", "field2" };

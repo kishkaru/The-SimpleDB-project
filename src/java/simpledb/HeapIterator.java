@@ -1,88 +1,99 @@
 package simpledb; 
+import java.io.IOException;
 import java.util.*;
 
-public class HeapIterator implements DbFileIterator{
+public class HeapIterator implements DbFileIterator {
+    private int pageNo;
+    private Iterator<Tuple>pageIt;
+    private boolean opened;
+    private TransactionId tid;
+    private int numPages;
+    private int id;
 
-    private ArrayList<Page> pagesList;
-    private Iterator<Tuple> tupleIterator = null;
-    private int currPage = 0;
-
-    public HeapIterator(ArrayList<Page> theList){
-        this.pagesList = theList;
+    public HeapIterator(TransactionId tid, int nPages, int id) {
+        this.tid = tid;
+        this.numPages = nPages;
+        this.id = id;
     }
 
-    public void open() throws DbException, TransactionAbortedException{
-        if(pagesList.size() == 0){
-            //throw new DbException("There are no pages in the pagesList!");
-            TupleDesc td = new TupleDesc(new Type[]{Type.INT_TYPE});
-            Tuple t = new Tuple(td);
-            ArrayList<Tuple> theList = new ArrayList<Tuple>();
-            theList.add(t);
-            tupleIterator =  theList.iterator();
-        }
-        else{
-            Page firstPage = pagesList.get(0);
-            tupleIterator = ((HeapPage) firstPage).iterator();
-        }
+    public void open()
+            throws DbException, TransactionAbortedException, IOException {
+        pageNo = 0;
+
+        int i = findNextIteratorIndex(0);
+
+        if (i == -1)
+            pageIt = null;
+        else
+            pageIt = getIteratorAtIndex(i);
+
+        opened = true;
     }
 
-    /** @return true if there are more tuples available. */
-    public boolean hasNext() throws DbException, TransactionAbortedException {
+    public boolean hasNext()
+            throws DbException, TransactionAbortedException, IOException {
         boolean result = false;
 
-        if(tupleIterator == null)
-            result =  false;
-        else if(tupleIterator.hasNext())
-            result =  true;
-        else if(currPage < pagesList.size() - 1) {
-            for(int i= currPage; i<pagesList.size(); i++){
-                Iterator<Tuple>  tt = ((HeapPage) (pagesList.get(i))).iterator();
-                if(tt.hasNext())
-                    return true;
-            }
-          }
+        if (!opened)
+            ;
+        else if (pageIt == null)
+            ;
+        else if (pageIt.hasNext())
+            result = true;
+        else if (pageNo >= numPages)
+            ;
+
+        int i = findNextIteratorIndex(pageNo + 1);
+        if (i == -1)
+            ;
+        else
+            result = true;
 
         return result;
     }
 
-    /**
-     * Gets the next tuple from the operator (typically implementing by reading
-     * from a child operator or an access method).
-     *
-     * @return The next tuple in the iterator.
-     * @throws java.util.NoSuchElementException if there are no more tuples
-     */
-    public Tuple next() throws DbException, TransactionAbortedException, NoSuchElementException {
-        if(tupleIterator == null)
+    private Iterator<Tuple> getIteratorAtIndex(int i)
+            throws DbException, TransactionAbortedException, NoSuchElementException, IOException {
+        HeapPage currentPage = (HeapPage) Database.getBufferPool().getPage(tid, new HeapPageId(this.id, i), null );
+        return currentPage.iterator();
+    }
+
+    private int findNextIteratorIndex(int i)
+            throws DbException, TransactionAbortedException, NoSuchElementException, IOException {
+        for(; i < numPages; i++) {
+            if(getIteratorAtIndex(i).hasNext())
+                return i;
+        }
+
+        return -1;
+    }
+
+    public Tuple next()
+            throws DbException, TransactionAbortedException, NoSuchElementException, IOException {
+
+        if (!opened || pageIt == null || pageNo >= numPages)
             throw new NoSuchElementException();
-        if(tupleIterator.hasNext()) {
-            return tupleIterator.next();
-        } else {
-            currPage++;
-            if (currPage >= pagesList.size()) {
-                throw new NoSuchElementException(String.valueOf(currPage));
-            }
-            Page nextPage = pagesList.get(currPage);
-            tupleIterator = ((HeapPage) nextPage).iterator();
-            return tupleIterator.next();
+
+        if (pageIt.hasNext())
+            return pageIt.next();
+
+        pageNo++;
+        int i = findNextIteratorIndex(pageNo);
+        if (i == -1)
+            throw new NoSuchElementException("No Tuples Left");
+        else {
+            pageNo = i;
+            pageIt = getIteratorAtIndex(i);
+            return pageIt.next();
         }
     }
 
-    /**
-     * Resets the iterator to the start.
-     * @throws DbException When rewind is unsupported.
-     */
-    public void rewind() throws DbException, TransactionAbortedException {
-        this.close();
-        this.open();
+    public void rewind() throws DbException, TransactionAbortedException, IOException {
+        close();
+        open();
     }
 
-    /**
-     * Closes the iterator.
-     */
     public void close() {
-        tupleIterator = null;
+        opened = false;
     }
-
-
 }

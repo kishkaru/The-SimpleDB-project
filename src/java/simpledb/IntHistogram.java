@@ -16,16 +16,16 @@ public class IntHistogram {
 
     /**
      * Create a new IntHistogram.
-     * 
+     *
      * This IntHistogram should maintain a histogram of integer values that it receives.
      * It should split the histogram into "buckets" buckets.
-     * 
+     *
      * The values that are being histogrammed will be provided one-at-a-time through the "addValue()" function.
-     * 
+     *
      * Your implementation should use space and have execution time that are both
-     * constant with respect to the number of values being histogrammed.  For example, you shouldn't 
+     * constant with respect to the number of values being histogrammed.  For example, you shouldn't
      * simply store every value that you see in a sorted list.
-     * 
+     *
      * @param buckets The number of buckets to split the input value into.
      * @param min The minimum integer value that will ever be passed to this class for histogramming
      * @param max The maximum integer value that will ever be passed to this class for histogramming
@@ -45,7 +45,7 @@ public class IntHistogram {
             index =  index - 1;
         }
         return index;
-    } 
+    }
 
     /**
      * Add a value to the set of values that you are keeping a histogram of.
@@ -57,10 +57,9 @@ public class IntHistogram {
     }
 
     private double eqSelect(int v) {
-        if ((v < min) || (v > max)) {
+        if ((v < min) || (v > max))
             return 0.0;
-        }
-        return (buckets[index(v)] / bucketSize) / tuples;
+        return (buckets[index(v)] / Math.max(1, bucketSize)) / tuples;
     }
 
     private double gtSelect(int v) {
@@ -69,7 +68,7 @@ public class IntHistogram {
             return 1.0;
 
         // if value larger than max, nothing will be greater
-        if (v > max) 
+        if (v > max)
             return 0.0;
 
         int index = index(v);
@@ -86,10 +85,10 @@ public class IntHistogram {
 
     /**
      * Estimate the selectivity of a particular predicate and operand on this table.
-     * 
-     * For example, if "op" is "GREATER_THAN" and "v" is 5, 
+     *
+     * For example, if "op" is "GREATER_THAN" and "v" is 5,
      * return your estimate of the fraction of elements that are greater than 5.
-     * 
+     *
      * @param op Operator
      * @param v Value
      * @return Predicted selectivity of this particular operator and value
@@ -107,17 +106,16 @@ public class IntHistogram {
             selectivity =  1.0 - gtSelect(v);
         if (op == Predicate.Op.NOT_EQUALS)
             selectivity = 1.0 - eqSelect(v);
-        if (op == Predicate.Op.GREATER_THAN_OR_EQ) {
+        if (op == Predicate.Op.GREATER_THAN_OR_EQ)
             selectivity = gtSelect(v) + eqSelect(v);
-        }
 
         return selectivity;
     }
-    
+
     /**
      * @return
      *     the average selectivity of this histogram.
-     *     
+     *
      *     This is not an indispensable method to implement the basic
      *     join optimization. It may be needed if you want to
      *     implement a more efficient optimization
@@ -129,7 +127,7 @@ public class IntHistogram {
         }
         return total / numBuckets;
     }
-    
+
     /**
      * @return A string describing this histogram, for debugging purposes
      */

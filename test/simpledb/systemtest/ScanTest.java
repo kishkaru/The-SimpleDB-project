@@ -5,6 +5,7 @@ import simpledb.systemtest.SystemTestUtil;
 import static org.junit.Assert.*;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.NoSuchElementException;
@@ -79,7 +80,7 @@ public class ScanTest extends SimpleDbTestBase {
             }
 
             @Override
-            public Page readPage(PageId pid) throws NoSuchElementException, IOException {
+            public Page readPage(PageId pid) throws NoSuchElementException {
                 readCount += 1;
                 return super.readPage(pid);
             }

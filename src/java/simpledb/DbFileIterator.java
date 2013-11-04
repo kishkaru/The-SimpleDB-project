@@ -1,4 +1,6 @@
 package simpledb;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.*;
 
@@ -12,11 +14,11 @@ public interface DbFileIterator extends Serializable {
      * @throws DbException when there are problems opening/accessing the database.
      */
     public void open()
-        throws DbException, TransactionAbortedException;
+        throws DbException, TransactionAbortedException, FileNotFoundException, IOException;
 
     /** @return true if there are more tuples available. */
     public boolean hasNext()
-        throws DbException, TransactionAbortedException;
+        throws DbException, TransactionAbortedException, FileNotFoundException, IOException;
 
     /**
      * Gets the next tuple from the operator (typically implementing by reading
@@ -26,13 +28,13 @@ public interface DbFileIterator extends Serializable {
      * @throws NoSuchElementException if there are no more tuples
      */
     public Tuple next()
-        throws DbException, TransactionAbortedException, NoSuchElementException;
+        throws DbException, TransactionAbortedException, NoSuchElementException, IOException, FileNotFoundException;
 
     /**
      * Resets the iterator to the start.
      * @throws DbException When rewind is unsupported.
      */
-    public void rewind() throws DbException, TransactionAbortedException;
+    public void rewind() throws DbException, TransactionAbortedException, IOException, FileNotFoundException;
 
     /**
      * Closes the iterator.

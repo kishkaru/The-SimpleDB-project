@@ -87,7 +87,7 @@ public class JoinOptimizerTest extends SimpleDbTestBase {
 	 * Verify that the estimated join costs from estimateJoinCost() are reasonable
 	 * we check various order requirements for the output of estimateJoinCost.
 	 */
-	@Test public void estimateJoinCostTest() throws ParsingException {
+	@Test public void estimateJoinCostTest() throws ParsingException, DbException, TransactionAbortedException {
 		// It's hard to narrow these down much at all, because students 
 		// may have implemented custom join algorithms.
 		// So, just make sure the orders of the return values make sense.
@@ -164,7 +164,7 @@ public class JoinOptimizerTest extends SimpleDbTestBase {
 	/**
 	 * Verify that the join cardinalities produced by estimateJoinCardinality() are reasonable
 	 */
-	@Test public void estimateJoinCardinality() throws ParsingException {
+	@Test public void estimateJoinCardinality() throws ParsingException, DbException, TransactionAbortedException {
         TransactionId tid = new TransactionId();
         Parser p = new Parser();
 		JoinOptimizer j = new JoinOptimizer(p.generateLogicalPlan(tid, "SELECT * FROM " + tableName2 + " t1, " + tableName2 + " t2 WHERE t1.c8 = t2.c7;"), 

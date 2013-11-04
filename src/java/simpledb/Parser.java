@@ -36,7 +36,7 @@ public class Parser {
     }
 
     void processExpression(TransactionId tid, ZExpression wx, LogicalPlan lp)
-            throws simpledb.ParsingException {
+            throws simpledb.ParsingException, DbException, TransactionAbortedException {
         if (wx.getOperator().equals("AND")) {
             for (int i = 0; i < wx.nbOperands(); i++) {
                 if (!(wx.getOperand(i) instanceof ZExpression)) {
@@ -133,7 +133,7 @@ public class Parser {
     }
 
     public LogicalPlan parseQueryLogicalPlan(TransactionId tid, ZQuery q)
-            throws IOException, Zql.ParseException, simpledb.ParsingException {
+            throws IOException, Zql.ParseException, simpledb.ParsingException, DbException, TransactionAbortedException {
         @SuppressWarnings("unchecked")
         Vector<ZFromItem> from = q.getFrom();
         LogicalPlan lp = new LogicalPlan();
@@ -465,7 +465,7 @@ public class Parser {
     }
 
     public LogicalPlan generateLogicalPlan(TransactionId tid, String s)
-            throws simpledb.ParsingException {
+            throws simpledb.ParsingException, DbException, TransactionAbortedException {
         ByteArrayInputStream bis = new ByteArrayInputStream(s.getBytes());
         ZqlParser p = new ZqlParser(bis);
         try {
@@ -584,7 +584,7 @@ public class Parser {
             "group by", "max(", "min(", "avg(", "count", "rollback", "commit",
             "insert", "delete", "values", "into" };
 
-    public static void main(String argv[]) throws IOException {
+    public static void main(String argv[]) throws IOException, DbException, TransactionAbortedException {
 
         if (argv.length < 1 || argv.length > 4) {
             System.out.println("Invalid number of arguments.\n" + usage);
@@ -604,7 +604,7 @@ public class Parser {
 
     protected boolean interactive = true;
 
-    protected void start(String[] argv) throws IOException {
+    protected void start(String[] argv) throws IOException, DbException, TransactionAbortedException {
         // first add tables to database
         Database.getCatalog().loadSchema(argv[0]);
         TableStats.computeStatistics();
