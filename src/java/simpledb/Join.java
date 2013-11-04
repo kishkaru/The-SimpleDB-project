@@ -119,6 +119,10 @@ public class Join extends Operator {
             t2 = c2.next();
         }
 
+        if (t1 == null || t2 == null) {
+            return null;
+        }
+
         while(true) {
             Tuple t = null;
 

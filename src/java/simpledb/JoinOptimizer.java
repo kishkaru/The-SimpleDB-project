@@ -102,17 +102,10 @@ public class JoinOptimizer {
      */
     public double estimateJoinCost(LogicalJoinNode j, int card1, int card2,
             double cost1, double cost2) {
-        if (j instanceof LogicalSubplanJoinNode) {
-            // A LogicalSubplanJoinNode represents a subquery.
-            // You do not need to implement proper support for these for Project 3.
+        if (j instanceof LogicalSubplanJoinNode)
             return card1 + cost1 + cost2;
-        } else {
-            // some code goes here.
-            // HINT: You may need to use the variable "j" if you implemented
-            // a join algorithm that's more complicated than a basic nested-loops
-            // join.
+        else
             return cost1 + card1 * cost2 + card1 * card2;
-        }
     }
 
     /**
@@ -136,11 +129,9 @@ public class JoinOptimizer {
      */
     public int estimateJoinCardinality(LogicalJoinNode j, int card1, int card2,
             boolean t1pkey, boolean t2pkey, Map<String, TableStats> stats) {
-        if (j instanceof LogicalSubplanJoinNode) {
-            // A LogicalSubplanJoinNode represents a subquery.
-            // You do not need to implement proper support for these for Project 3.
+        if (j instanceof LogicalSubplanJoinNode)
             return card1;
-        } else {
+        else {
             return estimateTableJoinCardinality(j.p, j.t1Alias, j.t2Alias,
                     j.f1PureName, j.f2PureName, card1, card2, t1pkey, t2pkey,
                     stats, p.getTableAliasToIdMapping());
@@ -241,10 +232,6 @@ public class JoinOptimizer {
             HashMap<String, TableStats> stats,
             HashMap<String, Double> filterSelectivities, boolean explain)
             throws ParsingException {
-
-        // See the project writeup for some hints as to how this function
-        // should work.
-        // some code goes here
 
         PlanCache pc = new PlanCache();
         // for (i in 1...|j|):  
