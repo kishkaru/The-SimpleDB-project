@@ -105,7 +105,7 @@ public class JoinOptimizer {
         if (j instanceof LogicalSubplanJoinNode)
             return card1 + cost1 + cost2;
         else
-            return cost1 + card1 * cost2 + card1 * card2;
+            return cost1 + (card1 * cost2) + (card1 * card2);
     }
 
     /**
@@ -168,10 +168,10 @@ public class JoinOptimizer {
 
     private static double avgSelectivity(Predicate.Op joinOp, String tableAlias,
             String fieldPureName, Map<String, TableStats> stats, Map<String, Integer> tableAliasToId) {
-        int tableId = tableAliasToId.get(tableAlias);
-        TupleDesc td = Database.getCatalog().getTupleDesc(tableId);
-        String tableName = Database.getCatalog().getTableName(tableId);
-        return stats.get(tableName).avgSelectivity(td.fieldNameToIndex(fieldPureName), joinOp);
+        int tid = tableAliasToId.get(tableAlias);
+        TupleDesc td = Database.getCatalog().getTupleDesc(tid);
+        String tname = Database.getCatalog().getTableName(tid);
+        return stats.get(tname).avgSelectivity(td.fieldNameToIndex(fieldPureName), joinOp);
     }
 
 
@@ -228,42 +228,34 @@ public class JoinOptimizer {
      *             when stats or filter selectivities is missing a table in the
      *             join, or or when another internal error occurs
      */
-    public Vector<LogicalJoinNode> orderJoins(
-            HashMap<String, TableStats> stats,
-            HashMap<String, Double> filterSelectivities, boolean explain)
+    public Vector<LogicalJoinNode> orderJoins( HashMap<String, TableStats> stats, HashMap<String, Double> filterSelectivities, boolean explain)
             throws ParsingException {
 
-        PlanCache pc = new PlanCache();
-        // for (i in 1...|j|):  
-        // First find best plan for single join, then for two joins, etc. 
-        for(int i = 0; i <= joins.size(); i++) {
-            // for s in {all length i subsets of j} 
-            // Looking at a concrete subset of joins
-            for(Set<LogicalJoinNode> s : enumerateSubsets(joins, i)) {
-                // We want to find the best plan for this concrete subset 
+        PlanCache planCache = new PlanCache();
+
+        for(int i = 0; i < joins.size(); i++) {
+            for(Set<LogicalJoinNode> s : enumerateSubsets(joins, i+1)) {
+
                 CostCard bestPlan = new CostCard();
                 bestPlan.cost = Double.MAX_VALUE;
 
-                // for s' in {all length i-1 subsets of s} 
                 for(LogicalJoinNode n : s) {
-                    CostCard subplan = computeCostAndCardOfSubplan(
-                            stats, 
-                            filterSelectivities, 
-                            n, 
-                            s, 
-                            bestPlan.cost, 
-                            pc);
-                    if (subplan != null && subplan.cost < bestPlan.cost)
+                    CostCard subplan = computeCostAndCardOfSubplan(stats, filterSelectivities, n, s, bestPlan.cost, planCache);
+
+                    if (subplan != null && (subplan.cost < bestPlan.cost))
                         bestPlan = subplan;
                 }
 
-                if (bestPlan != null)
-                    pc.addPlan(s, bestPlan.cost, bestPlan.card, bestPlan.plan);
+                if (bestPlan.cost != Double.MAX_VALUE)
+                    planCache.addPlan(s, bestPlan.cost, bestPlan.card, bestPlan.plan);
             }
         }
-        Vector<LogicalJoinNode> plan = pc.getOrder(new HashSet<LogicalJoinNode>(joins));
+
+        Vector<LogicalJoinNode> plan = planCache.getOrder(new HashSet<LogicalJoinNode>(joins));
+
         if (explain)
-            printJoins(plan, pc, stats, filterSelectivities);
+            printJoins(plan, planCache, stats, filterSelectivities);
+
         return plan;
     }
 
