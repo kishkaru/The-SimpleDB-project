@@ -193,6 +193,7 @@ public class TableStats {
      */
     public int estimateTableCardinality(double selectivityFactor) {
         double cardinality = (tuples * selectivityFactor);
+
         return (int) cardinality;
     }
 
@@ -209,10 +210,12 @@ public class TableStats {
     public double avgSelectivity(int field, Predicate.Op op) {
         Type type = td.getFieldType(field);
         double selectivity = 0.0;
+
         if (type == Type.INT_TYPE)
             selectivity = intHistograms[field].avgSelectivity();
-        if (type == Type.STRING_TYPE)
+        else if (type == Type.STRING_TYPE)
             selectivity = strHistograms[field].avgSelectivity();
+
         return selectivity;
     }
 
@@ -232,10 +235,12 @@ public class TableStats {
     public double estimateSelectivity(int field, Predicate.Op op, Field constant) {
         Type type = td.getFieldType(field);
         double selectivity = 0.0;
+
         if (type == Type.INT_TYPE)
             selectivity = intHistograms[field].estimateSelectivity(op, ((IntField) constant).getValue());
-        if (type == Type.STRING_TYPE)
+        else if (type == Type.STRING_TYPE)
             selectivity = strHistograms[field].estimateSelectivity(op, ((StringField) constant).getValue());
+
         return selectivity;
     }
 

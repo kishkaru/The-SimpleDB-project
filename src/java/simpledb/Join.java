@@ -119,6 +119,10 @@ public class Join extends Operator {
             t2 = c2.next();
         }
 
+        if (t1 == null || t2 == null) {
+            return null;
+        }
+
         while(true) {
             Tuple t = null;
 
@@ -152,12 +156,10 @@ public class Join extends Operator {
         int counter = 0;
         for (int i = 0; i < c1.getTupleDesc().numFields(); i++) {
             newTuple.setField(counter, t1.getField(i));
-            //System.out.println("t1 field: " + t1.getField(i));
             counter++;
         }
         for (int i = 0; i < c2.getTupleDesc().numFields(); i++) {
             newTuple.setField(counter, t2.getField(i));
-            //System.out.println("t2 field: " + t2.getField(i));
             counter++;
         }
 
