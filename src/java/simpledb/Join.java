@@ -112,15 +112,15 @@ public class Join extends Operator {
         if(end)
             return null;
 
-        if (t1 == null || t2 == null) {
-            return null;
-        }
-
         if (c1.hasNext() && t1 == null) {
             t1 = c1.next();
         }
         if (c2.hasNext() && t2 == null) {
             t2 = c2.next();
+        }
+
+        if (t1 == null || t2 == null) {
+            return null;
         }
 
         while(true) {
