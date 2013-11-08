@@ -102,10 +102,15 @@ public class JoinOptimizer {
      */
     public double estimateJoinCost(LogicalJoinNode j, int card1, int card2,
             double cost1, double cost2) {
+
+        double cost;
+
         if (j instanceof LogicalSubplanJoinNode)
-            return card1 + cost1 + cost2;
+            cost = card1 + cost1 + cost2;
         else
-            return cost1 + (card1 * cost2) + (card1 * card2);
+            cost = cost1 + (card1 * cost2) + (card1 * card2);
+
+        return cost;
     }
 
     /**
@@ -129,12 +134,12 @@ public class JoinOptimizer {
      */
     public int estimateJoinCardinality(LogicalJoinNode j, int card1, int card2,
             boolean t1pkey, boolean t2pkey, Map<String, TableStats> stats) {
+
         if (j instanceof LogicalSubplanJoinNode)
             return card1;
         else {
-            return estimateTableJoinCardinality(j.p, j.t1Alias, j.t2Alias,
-                    j.f1PureName, j.f2PureName, card1, card2, t1pkey, t2pkey,
-                    stats, p.getTableAliasToIdMapping());
+            return estimateTableJoinCardinality(j.p, j.t1Alias, j.t2Alias, j.f1PureName, j.f2PureName, card1, card2,
+                    t1pkey, t2pkey, stats, p.getTableAliasToIdMapping());
         }
     }
     /**
@@ -146,32 +151,37 @@ public class JoinOptimizer {
             boolean t2pkey, Map<String, TableStats> stats,
             Map<String, Integer> tableAliasToId) {
 
-        if (joinOp == Predicate.Op.LIKE || joinOp == Predicate.Op.EQUALS) {
-            if (t1pkey && t2pkey) 
-                return Math.min(card1, card2);
-            else 
-                return Math.max(card1, card2);
-        } else if (
-            joinOp == Predicate.Op.LESS_THAN ||
-            joinOp == Predicate.Op.LESS_THAN_OR_EQ ||
-            joinOp == Predicate.Op.GREATER_THAN ||
-            joinOp == Predicate.Op.GREATER_THAN_OR_EQ ||
-            joinOp == Predicate.Op.NOT_EQUALS)  {
-                double table1avg = avgSelectivity(joinOp, table1Alias, field1PureName, stats, tableAliasToId);
-                double table2avg = avgSelectivity(joinOp, table2Alias, field2PureName, stats, tableAliasToId);
-                return (int) (card1 * table1avg * card2 * table2avg);
-        } else {
-            return 0;
+        int card = 0;
+
+
+        if (joinOp == Predicate.Op.LESS_THAN || joinOp == Predicate.Op.LESS_THAN_OR_EQ || joinOp == Predicate.Op.GREATER_THAN
+                || joinOp == Predicate.Op.GREATER_THAN_OR_EQ || joinOp == Predicate.Op.NOT_EQUALS)  {
+            double table1avg = avgSelectivity(joinOp, table1Alias, field1PureName, stats, tableAliasToId);
+            double table2avg = avgSelectivity(joinOp, table2Alias, field2PureName, stats, tableAliasToId);
+
+            card = (int) (card1 * table1avg * card2 * table2avg);
+        }
+        else if (joinOp == Predicate.Op.LIKE || joinOp == Predicate.Op.EQUALS) {
+            if (t1pkey && t2pkey)
+                card = Math.min(card1, card2);
+            else
+                card = Math.max(card1, card2);
         }
 
+        return card;
     }
 
     private static double avgSelectivity(Predicate.Op joinOp, String tableAlias,
             String fieldPureName, Map<String, TableStats> stats, Map<String, Integer> tableAliasToId) {
+
         int tid = tableAliasToId.get(tableAlias);
-        TupleDesc td = Database.getCatalog().getTupleDesc(tid);
+
+        TupleDesc tdesc = Database.getCatalog().getTupleDesc(tid);
         String tname = Database.getCatalog().getTableName(tid);
-        return stats.get(tname).avgSelectivity(td.fieldNameToIndex(fieldPureName), joinOp);
+        TableStats tstats = stats.get(tname);
+        double selectivity = tstats.avgSelectivity(tdesc.fieldNameToIndex(fieldPureName), joinOp);
+
+        return selectivity;
     }
 
 
