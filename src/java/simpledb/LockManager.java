@@ -7,7 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class LockManager {
     private ConcurrentHashMap<PageId, TransactionId> writeMap;
     private ConcurrentHashMap<PageId, ArrayList<TransactionId>> readMap;
-    private static final int TIMEOUT = 100;
+    private static final int TIMEOUT = 10;
 
     public LockManager() {
         writeMap = new ConcurrentHashMap<PageId, TransactionId>();
@@ -15,49 +15,71 @@ public class LockManager {
     }
 
     public synchronized void addReadLock(TransactionId tid, PageId pid) throws InterruptedException{
-
-        ArrayList<TransactionId> transList = readMap.get(pid);
-
-        if(transList == null) {
-            transList = new ArrayList<TransactionId>();
-            transList.add(tid);
-            readMap.put(pid, transList);
-            System.out.println("READ LOCK ADDED");
+        if (writeMap.containsKey(pid) && writeMap.get(pid) == tid) {
+            ArrayList<TransactionId> transList = readMap.get(pid);
+            if(transList == null) {
+                transList = new ArrayList<TransactionId>();
+                transList.add(tid);
+                readMap.put(pid, transList);
+            }
+            else if(!transList.contains(tid)) {
+                transList.add(tid);
+                readMap.put(pid, transList);
+            }
+            return;
         }
-        else if(!transList.contains(tid)) {
-            transList.add(tid);
-            readMap.put(pid, transList);
-            System.out.println("REAd LOCK ADDED");
+
+        while(true) {
+            if(!writeMap.containsKey(pid)) {
+                ArrayList<TransactionId> transList = readMap.get(pid);
+                if(transList == null) {
+                    transList = new ArrayList<TransactionId>();
+                    transList.add(tid);
+                    readMap.put(pid, transList);
+                    //System.out.println("READ LOCK ADDED BY: " + tid.getId() );
+                     break;
+                }
+                else if(!transList.contains(tid)) {
+                    transList.add(tid);
+                    readMap.put(pid, transList);
+                    //System.out.println("READ LOCK ADDED BY: " + tid.getId() );
+                    break;
+                }
+            }
+
+            Thread.sleep(TIMEOUT);
         }
-        //else
-            //Thread.sleep(TIMEOUT);
 
     }
 
     public synchronized void addWriteLock(TransactionId tid, PageId pid) throws InterruptedException{
+        if (readMap.containsKey(pid) && readMap.get(pid).contains(tid) && readMap.get(pid).size() == 1) {
+            writeMap.put(pid, tid);
+        }
 
         while(true) {
-                //System.out.println("BAA");
-                if(writeMap.get(pid) == null) {
-                    writeMap.put(pid, tid);
-                    System.out.println("WRITE LOCK ADDED");
-                    break;
+            //System.out.println(writeMap.get(pid));
+            if(!writeMap.containsKey(pid)) {
+                this.addReadLock(tid,pid);
+                writeMap.put(pid, tid);
+                //System.out.println("WRITE LOCK ADDED  BY: " + tid.getId() );
+               break;
             }
-            //else
-                //Thread.sleep(TIMEOUT);
+            else
+                Thread.sleep(TIMEOUT);
         }
     }
 
     public synchronized void removeReadLock(TransactionId tid, PageId pid) {
         ArrayList<TransactionId> transList = readMap.get(pid);
-        readMap.remove(tid);
+        transList.remove(tid);
         readMap.put(pid, transList);
-        System.out.println("READ LOCK REMOVED");
+        //System.out.println("READ LOCK REMOVED BY: " + tid.getId() );
     }
 
-    public void removewriteLock(TransactionId tid, PageId pid) {
+    public synchronized void removewriteLock(TransactionId tid, PageId pid) {
         writeMap.remove(pid);
-        System.out.println("WRITE LOCK REMOVED");
+        //System.out.println("WRITE LOCK REMOVED BY: " + tid.getId() );
     }
 
     public boolean holdsReadLock(TransactionId tid, PageId pid) {
