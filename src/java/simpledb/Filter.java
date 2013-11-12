@@ -35,7 +35,7 @@ public class Filter extends Operator {
         return this.child.getTupleDesc();
     }
 
-    public void open() throws DbException, NoSuchElementException, TransactionAbortedException, IOException {
+    public void open() throws DbException, NoSuchElementException, TransactionAbortedException, IOException, InterruptedException {
     	DbIterator child = this.child;
         child.open();
         while (child.hasNext()) {

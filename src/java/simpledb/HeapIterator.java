@@ -17,7 +17,7 @@ public class HeapIterator implements DbFileIterator {
     }
 
     public void open()
-            throws DbException, TransactionAbortedException, IOException {
+            throws DbException, TransactionAbortedException, IOException, InterruptedException {
         pageNo = 0;
 
         int i = findNextIteratorIndex(0);
@@ -31,7 +31,7 @@ public class HeapIterator implements DbFileIterator {
     }
 
     public boolean hasNext()
-            throws DbException, TransactionAbortedException, IOException {
+            throws DbException, TransactionAbortedException, IOException, InterruptedException {
         boolean result = false;
 
         if (!opened)
@@ -53,13 +53,13 @@ public class HeapIterator implements DbFileIterator {
     }
 
     private Iterator<Tuple> getIteratorAtIndex(int i)
-            throws DbException, TransactionAbortedException, NoSuchElementException, IOException {
+            throws DbException, TransactionAbortedException, NoSuchElementException, IOException, InterruptedException {
         HeapPage currentPage = (HeapPage) Database.getBufferPool().getPage(tid, new HeapPageId(this.id, i), null );
         return currentPage.iterator();
     }
 
     private int findNextIteratorIndex(int i)
-            throws DbException, TransactionAbortedException, NoSuchElementException, IOException {
+            throws DbException, TransactionAbortedException, NoSuchElementException, IOException, InterruptedException {
         for(; i < numPages; i++) {
             if(getIteratorAtIndex(i).hasNext())
                 return i;
@@ -69,7 +69,7 @@ public class HeapIterator implements DbFileIterator {
     }
 
     public Tuple next()
-            throws DbException, TransactionAbortedException, NoSuchElementException, IOException {
+            throws DbException, TransactionAbortedException, NoSuchElementException, IOException, InterruptedException {
 
         if (!opened || pageIt == null || pageNo >= numPages)
             throw new NoSuchElementException();
@@ -88,7 +88,7 @@ public class HeapIterator implements DbFileIterator {
         }
     }
 
-    public void rewind() throws DbException, TransactionAbortedException, IOException {
+    public void rewind() throws DbException, TransactionAbortedException, IOException, InterruptedException {
         close();
         open();
     }

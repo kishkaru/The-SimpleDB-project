@@ -26,6 +26,7 @@ public class BufferPool {
 
     private HashMap<PageId, Page> theBufferPool;
     private int maxNumPages;
+    private LockManager manager;
 
     /**
      * Creates a BufferPool that caches up to numPages pages.
@@ -52,6 +53,7 @@ public class BufferPool {
                     return removeOldest;
                 }
             };
+            manager = new LockManager();
         }
     }
 
@@ -71,7 +73,12 @@ public class BufferPool {
      * @param perm the requested permissions on the page
      */
     public Page getPage(TransactionId tid, PageId pid, Permissions perm)
-        throws TransactionAbortedException, DbException, FileNotFoundException, IOException{
+        throws TransactionAbortedException, DbException, IOException, InterruptedException{
+
+        if(perm == Permissions.READ_WRITE)
+            this.manager.addWriteLock(tid, pid);
+        else
+            this.manager.addReadLock(tid,pid);
 
         //int hashCode = pid.hashCode();
         Page readPage = theBufferPool.get(pid);
@@ -98,8 +105,8 @@ public class BufferPool {
      * @param pid the ID of the page to unlock
      */
     public  void releasePage(TransactionId tid, PageId pid) {
-        // some code goes here
-        // not necessary for proj1
+        this.manager.removeReadLock(tid, pid);
+        this.manager.removewriteLock(tid, pid);
     }
 
     /**
@@ -108,15 +115,12 @@ public class BufferPool {
      * @param tid the ID of the transaction requesting the unlock
      */
     public void transactionComplete(TransactionId tid) throws IOException {
-        // some code goes here
-        // not necessary for proj1
+        this.transactionComplete(tid, true);
     }
 
     /** Return true if the specified transaction has a lock on the specified page */
-    public boolean holdsLock(TransactionId tid, PageId p) {
-        // some code goes here
-        // not necessary for proj1
-        return false;
+    public boolean holdsLock(TransactionId tid, PageId pid) {
+        return this.manager.holdsReadLock(tid, pid) || this.manager.holdsWriteLock(tid, pid);
     }
 
     /**
@@ -128,8 +132,7 @@ public class BufferPool {
      */
     public void transactionComplete(TransactionId tid, boolean commit)
         throws IOException {
-        // some code goes here
-        // not necessary for proj1
+
     }
 
     /**
@@ -147,9 +150,10 @@ public class BufferPool {
      * @param t the tuple to add
      */
     public void insertTuple(TransactionId tid, int tableId, Tuple t)
-        throws DbException, IOException, TransactionAbortedException {
+        throws DbException, IOException, TransactionAbortedException, InterruptedException {
         DbFile file = Database.getCatalog().getDbFile(tableId);
         file.insertTuple(tid, t);
+
     }
 
     /**
@@ -166,7 +170,7 @@ public class BufferPool {
      * @param t the tuple to add
      */
     public  void deleteTuple(TransactionId tid, Tuple t)
-        throws DbException, TransactionAbortedException, IOException {
+        throws DbException, TransactionAbortedException, IOException, InterruptedException {
 
         int tableId = t.getRecordId().getPageId().getTableId();
         DbFile file = Database.getCatalog().getDbFile(tableId);

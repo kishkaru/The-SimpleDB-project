@@ -14,11 +14,11 @@ public interface DbFileIterator extends Serializable {
      * @throws DbException when there are problems opening/accessing the database.
      */
     public void open()
-        throws DbException, TransactionAbortedException, FileNotFoundException, IOException;
+        throws DbException, TransactionAbortedException, IOException, InterruptedException;
 
     /** @return true if there are more tuples available. */
     public boolean hasNext()
-        throws DbException, TransactionAbortedException, FileNotFoundException, IOException;
+        throws DbException, TransactionAbortedException, IOException, InterruptedException;
 
     /**
      * Gets the next tuple from the operator (typically implementing by reading
@@ -28,13 +28,13 @@ public interface DbFileIterator extends Serializable {
      * @throws NoSuchElementException if there are no more tuples
      */
     public Tuple next()
-        throws DbException, TransactionAbortedException, NoSuchElementException, IOException, FileNotFoundException;
+        throws DbException, TransactionAbortedException, NoSuchElementException, IOException, InterruptedException;
 
     /**
      * Resets the iterator to the start.
      * @throws DbException When rewind is unsupported.
      */
-    public void rewind() throws DbException, TransactionAbortedException, IOException, FileNotFoundException;
+    public void rewind() throws DbException, TransactionAbortedException, IOException, InterruptedException;
 
     /**
      * Closes the iterator.

@@ -31,7 +31,7 @@ public class Delete extends Operator {
         return this.child.getTupleDesc();
     }
 
-    public void open() throws DbException, TransactionAbortedException, IOException {
+    public void open() throws DbException, TransactionAbortedException, IOException, InterruptedException {
         child.open();
         super.open();
     }
@@ -41,7 +41,7 @@ public class Delete extends Operator {
         child.close();
     }
 
-    public void rewind() throws DbException, TransactionAbortedException, IOException {
+    public void rewind() throws DbException, TransactionAbortedException, IOException, InterruptedException {
         child.rewind();
     }
 
@@ -54,7 +54,7 @@ public class Delete extends Operator {
      * @see Database#getBufferPool
      * @see BufferPool#deleteTuple
      */
-    protected Tuple fetchNext() throws TransactionAbortedException, DbException, IOException {
+    protected Tuple fetchNext() throws TransactionAbortedException, DbException, IOException, InterruptedException {
         Tuple result = null;
 
         if(!done){

@@ -98,7 +98,7 @@ public class HeapFile implements DbFile {
     }
 
     public ArrayList<Page> insertTuple(TransactionId tid, Tuple t)
-            throws DbException, IOException, TransactionAbortedException {
+            throws DbException, IOException, TransactionAbortedException, InterruptedException {
         ArrayList<Page> pageList = new ArrayList<Page>();
 
         HeapPage page = null;
@@ -109,8 +109,11 @@ public class HeapFile implements DbFile {
                  page = p;
                  pageList.add(page);
                  page.insertTuple(t);
+                 p.markDirty(true,tid);
                  return pageList;
              }
+             else
+                 Database.getBufferPool().releasePage(tid,p.pid);
         }
         
         long initPages = numPages();
@@ -124,6 +127,7 @@ public class HeapFile implements DbFile {
         page = (HeapPage) Database.getBufferPool().getPage(
                 tid, pid, Permissions.READ_WRITE);
         page.insertTuple(t);
+        page.markDirty(true,tid);
 
         assert numPages() > initPages;
 
@@ -131,12 +135,13 @@ public class HeapFile implements DbFile {
     }
 
     public Page deleteTuple(TransactionId tid, Tuple t) throws DbException,
-            TransactionAbortedException, IOException {
+            TransactionAbortedException, IOException, InterruptedException {
 
         PageId pid = t.getRecordId().getPageId();
         HeapPage page = (HeapPage) Database.getBufferPool().getPage(
                 tid, pid, Permissions.READ_WRITE);
         page.deleteTuple(t);
+        page.markDirty(true, tid);
 
         return page;
     }
