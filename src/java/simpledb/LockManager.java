@@ -7,7 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class LockManager {
     private ConcurrentHashMap<PageId, TransactionId> writeMap;
     private ConcurrentHashMap<PageId, ArrayList<TransactionId>> readMap;
-    private static final int TIMEOUT = 10;
+    private static final int TIMEOUT = 100;
 
     public LockManager() {
         writeMap = new ConcurrentHashMap<PageId, TransactionId>();
@@ -56,17 +56,19 @@ public class LockManager {
         if (readMap.containsKey(pid) && readMap.get(pid).contains(tid) && readMap.get(pid).size() == 1) {
             writeMap.put(pid, tid);
         }
+        if(writeMap.get(pid) == tid)
+            return;
 
         while(true) {
-            //System.out.println(writeMap.get(pid));
-            if(!writeMap.containsKey(pid)) {
+            ArrayList<TransactionId> transList = readMap.get(pid);
+            if(!writeMap.containsKey(pid) && (transList == null || transList.size() == 0)) {
                 this.addReadLock(tid,pid);
                 writeMap.put(pid, tid);
-                //System.out.println("WRITE LOCK ADDED  BY: " + tid.getId() );
-               break;
+                break;
             }
-            else
+            else {
                 Thread.sleep(TIMEOUT);
+            }
         }
     }
 

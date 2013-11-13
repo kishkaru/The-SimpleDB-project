@@ -208,6 +208,8 @@ public class BufferPool {
 
         while(theIterator.hasNext())
             flushPage(theIterator.next());
+
+
     }
 
     /** Remove the specific page id from the buffer pool.
@@ -228,8 +230,8 @@ public class BufferPool {
         Page page = file.readPage(pid);
 
         if (page.isDirty() != null) {
-            file.writePage(page);
             page.markDirty(false, page.isDirty());
+            file.writePage(page);
         }
     }
 
