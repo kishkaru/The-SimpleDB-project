@@ -21,7 +21,7 @@ public class BufferPool {
     constructor instead. */
     public static final int DEFAULT_PAGES = 50;
 
-    private HashMap<PageId, Page> theBufferPool;
+    private Map<PageId, Page> theBufferPool;
     private int maxNumPages;
     private LockManager manager;
 
@@ -35,7 +35,7 @@ public class BufferPool {
             throw new IllegalArgumentException(String.valueOf(numPages));
         else{
             maxNumPages = numPages;
-            this.theBufferPool = new LinkedHashMap<PageId, Page>(maxNumPages+1, 0.75F, true) {
+            this.theBufferPool = Collections.synchronizedMap(new LinkedHashMap<PageId, Page>(maxNumPages+1, 0.75F, true) {
                 public boolean removeEldestEntry(Map.Entry oldest) {
                     boolean removeOldest = this.size() > maxNumPages;
 
@@ -52,7 +52,7 @@ public class BufferPool {
 
                     return removeOldest;
                 }
-            };
+            });
             manager = new LockManager();
         }
     }
@@ -82,6 +82,7 @@ public class BufferPool {
 
         Page readPage = theBufferPool.get(pid);
         if(readPage != null){
+            readPage.markDirty(false,tid);
             theBufferPool.put(pid, readPage);
             return readPage;
         }
@@ -102,7 +103,8 @@ public class BufferPool {
      * @param tid the ID of the transaction requesting the unlock
      * @param pid the ID of the page to unlock
      */
-    public  void releasePage(TransactionId tid, PageId pid) {
+    public void releasePage(TransactionId tid, PageId pid) {
+        //System.out.println("releasing page " + pid.pageNumber() + " by " + tid.getId());
         this.manager.removeReadLock(tid, pid);
         this.manager.removewriteLock(tid, pid);
     }
@@ -136,15 +138,21 @@ public class BufferPool {
            flushPages(tid);
         else {
            Iterator<Page> theIterator = this.theBufferPool.values().iterator();
-
            while(theIterator.hasNext()) {
                Page page = theIterator.next();
+               PageId pid = page.getId();
 
-               if(page.isDirty() == tid) {
-                   this.theBufferPool.put(page.getId(), page.getBeforeImage());
-                   releasePage(tid, page.getId());
-               }
+               if(page.isDirty() == tid)
+                   this.theBufferPool.put(pid, page.getBeforeImage());
            }
+        }
+
+        Iterator<Page> theIterator = this.theBufferPool.values().iterator();
+        while(theIterator.hasNext()) {
+            Page page = theIterator.next();
+            PageId pid = page.getId();
+            if(manager.holdsReadLock(tid,pid) || manager.holdsWriteLock(tid, pid))
+                releasePage(tid, page.getId());
         }
 
     }
@@ -204,12 +212,18 @@ public class BufferPool {
      *     break simpledb if running in NO STEAL mode.
      */
     public synchronized void flushAllPages() throws IOException {
-        Iterator<PageId> theIterator = this.theBufferPool.keySet().iterator();
+        Iterator<Page> theIterator = this.theBufferPool.values().iterator();
 
-        while(theIterator.hasNext())
-            flushPage(theIterator.next());
+        while(theIterator.hasNext()) {
+            Page page = theIterator.next();
+            PageId pid = page.getId();
+            DbFile file = Database.getCatalog().getDbFile(pid.getTableId());
 
-
+            if (page.isDirty() != null) {
+                page.markDirty(false, page.isDirty());
+                file.writePage(page);
+            }
+        }
     }
 
     /** Remove the specific page id from the buffer pool.
@@ -227,12 +241,12 @@ public class BufferPool {
      */
     private synchronized void flushPage(PageId pid) throws IOException {
         DbFile file = Database.getCatalog().getDbFile(pid.getTableId());
-        Page page = file.readPage(pid);
+        Page page = this.theBufferPool.get(pid);
 
-        if (page.isDirty() != null) {
+        //if (page.isDirty() != null) {
             page.markDirty(false, page.isDirty());
             file.writePage(page);
-        }
+        //}
     }
 
     /** Write all pages of the specified transaction to disk.
@@ -242,11 +256,10 @@ public class BufferPool {
 
         while(theIterator.hasNext()) {
             Page page = theIterator.next();
+            PageId pid = page.getId();
 
-            if(page.isDirty() == tid) {
-                flushPage(page.getId());
-                releasePage(tid, page.getId());
-            }
+            if(page.isDirty() == tid)
+                flushPage(pid);
         }
     }
 
