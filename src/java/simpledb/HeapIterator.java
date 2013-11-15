@@ -22,11 +22,14 @@ public class HeapIterator implements DbFileIterator {
 
         int i = findNextIteratorIndex(0);
 
-        if (i == -1)
+        if (i == -1){
             pageIt = null;
-        else
-            pageIt = getIteratorAtIndex(i);
 
+        }
+        else{
+            pageIt = getIteratorAtIndex(i);       //<-- problem here
+
+        }
         opened = true;
     }
 
@@ -54,7 +57,8 @@ public class HeapIterator implements DbFileIterator {
 
     private Iterator<Tuple> getIteratorAtIndex(int i)
             throws DbException, TransactionAbortedException, NoSuchElementException, IOException, InterruptedException {
-        HeapPage currentPage = (HeapPage) Database.getBufferPool().getPage(tid, new HeapPageId(this.id, i), null );
+
+        HeapPage currentPage = (HeapPage) Database.getBufferPool().getPage(tid, new HeapPageId(this.id, i), Permissions.READ_WRITE );
         return currentPage.iterator();
     }
 

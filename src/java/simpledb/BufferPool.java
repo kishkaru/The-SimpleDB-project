@@ -82,13 +82,11 @@ public class BufferPool {
 
         Page readPage = theBufferPool.get(pid);
         if(readPage != null){
-            readPage.markDirty(false,tid);
             theBufferPool.put(pid, readPage);
             return readPage;
         }
         else{
             Page newpage = Database.getCatalog().getDbFile(pid.getTableId()).readPage(pid);
-            newpage.markDirty(false,tid);
             theBufferPool.put(pid, newpage);
             return newpage;
         }
@@ -120,7 +118,6 @@ public class BufferPool {
 
     /** Return true if the specified transaction has a lock on the specified page */
     public boolean holdsLock(TransactionId tid, PageId pid) {
-        //return this.manager.holdsLock(tid,pid);
         return (this.manager.holdsReadLock(tid, pid) || this.manager.holdsWriteLock(tid, pid));
     }
 
@@ -137,13 +134,13 @@ public class BufferPool {
         if(commit)
            flushPages(tid);
         else {
-           Iterator<Page> theIterator = this.theBufferPool.values().iterator();
-           while(theIterator.hasNext()) {
-               Page page = theIterator.next();
-               PageId pid = page.getId();
+            Iterator<Page> theIterator = this.theBufferPool.values().iterator();
+            while(theIterator.hasNext()) {
+                Page page = theIterator.next();
+                PageId pid = page.getId();
 
-               if(page.isDirty() == tid)
-                   this.theBufferPool.put(pid, page.getBeforeImage());
+                if(page.isDirty() == tid)
+                    this.theBufferPool.put(pid, page.getBeforeImage());
            }
         }
 
@@ -154,7 +151,6 @@ public class BufferPool {
             if(manager.holdsReadLock(tid,pid) || manager.holdsWriteLock(tid, pid))
                 releasePage(tid, page.getId());
         }
-
     }
 
     /**
@@ -243,10 +239,8 @@ public class BufferPool {
         DbFile file = Database.getCatalog().getDbFile(pid.getTableId());
         Page page = this.theBufferPool.get(pid);
 
-        //if (page.isDirty() != null) {
-            page.markDirty(false, page.isDirty());
-            file.writePage(page);
-        //}
+        page.markDirty(false, page.isDirty());
+        file.writePage(page);
     }
 
     /** Write all pages of the specified transaction to disk.
