@@ -98,24 +98,24 @@ public class HeapFile implements DbFile {
     }
 
     public ArrayList<Page> insertTuple(TransactionId tid, Tuple t)
-            throws DbException, IOException, TransactionAbortedException {
+            throws DbException, IOException, TransactionAbortedException, InterruptedException {
         ArrayList<Page> pageList = new ArrayList<Page>();
 
-        HeapPage page = null;
         for(int i = 0; i < numPages(); i++) {
-             HeapPage p = (HeapPage) Database.getBufferPool().getPage(tid, 
+             HeapPage page = (HeapPage) Database.getBufferPool().getPage(tid,
                      new HeapPageId(getId(), i), Permissions.READ_WRITE);
-             if (p.getNumEmptySlots() > 0) {
-                 page = p;
-                 pageList.add(page);
+             if (page.getNumEmptySlots() > 0) {
                  page.insertTuple(t);
+                 pageList.add(page);
                  return pageList;
              }
+             else
+                 Database.getBufferPool().releasePage(tid, page.getId());
         }
         
-        long initPages = numPages();
+        //long initPages = numPages();
         HeapPageId pid = new HeapPageId(getId(), numPages());
-        page = new HeapPage(pid, HeapPage.createEmptyPageData());
+        HeapPage page = new HeapPage(pid, HeapPage.createEmptyPageData());
 
         FileOutputStream file = new FileOutputStream(f, true);
         file.write(page.getPageData());
@@ -124,14 +124,14 @@ public class HeapFile implements DbFile {
         page = (HeapPage) Database.getBufferPool().getPage(
                 tid, pid, Permissions.READ_WRITE);
         page.insertTuple(t);
+        pageList.add(page);
 
-        assert numPages() > initPages;
-
+        //assert numPages() > initPages;
         return pageList;
     }
 
     public Page deleteTuple(TransactionId tid, Tuple t) throws DbException,
-            TransactionAbortedException, IOException {
+            TransactionAbortedException, IOException, InterruptedException {
 
         PageId pid = t.getRecordId().getPageId();
         HeapPage page = (HeapPage) Database.getBufferPool().getPage(

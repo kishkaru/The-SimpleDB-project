@@ -1,10 +1,7 @@
 package simpledb;
 
 import java.io.*;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * BufferPool manages the reading and writing of pages into memory from
@@ -24,8 +21,9 @@ public class BufferPool {
     constructor instead. */
     public static final int DEFAULT_PAGES = 50;
 
-    private HashMap<PageId, Page> theBufferPool;
+    private Map<PageId, Page> theBufferPool;
     private int maxNumPages;
+    private LockManager manager;
 
     /**
      * Creates a BufferPool that caches up to numPages pages.
@@ -37,11 +35,14 @@ public class BufferPool {
             throw new IllegalArgumentException(String.valueOf(numPages));
         else{
             maxNumPages = numPages;
-            this.theBufferPool = new LinkedHashMap<PageId, Page>(maxNumPages+1, 0.75F, true) {
+            this.theBufferPool = Collections.synchronizedMap(new LinkedHashMap<PageId, Page>(maxNumPages+1, 0.75F, true) {
                 public boolean removeEldestEntry(Map.Entry oldest) {
                     boolean removeOldest = this.size() > maxNumPages;
 
-                    if (removeOldest) {
+                    if (((Page) oldest.getValue()).isDirty() != null)
+                        removeOldest = false;
+
+                    else if (removeOldest) {
                         try {
                             flushPage((PageId) oldest.getKey());
                         } catch (IOException e) {
@@ -51,7 +52,8 @@ public class BufferPool {
 
                     return removeOldest;
                 }
-            };
+            });
+            manager = new LockManager();
         }
     }
 
@@ -71,9 +73,13 @@ public class BufferPool {
      * @param perm the requested permissions on the page
      */
     public Page getPage(TransactionId tid, PageId pid, Permissions perm)
-        throws TransactionAbortedException, DbException, FileNotFoundException, IOException{
+        throws TransactionAbortedException, DbException, IOException, InterruptedException{
 
-        //int hashCode = pid.hashCode();
+        if(perm == Permissions.READ_WRITE)
+            this.manager.addWriteLock(tid, pid);
+        else
+            this.manager.addReadLock(tid,pid);
+
         Page readPage = theBufferPool.get(pid);
         if(readPage != null){
             theBufferPool.put(pid, readPage);
@@ -81,9 +87,7 @@ public class BufferPool {
         }
         else{
             Page newpage = Database.getCatalog().getDbFile(pid.getTableId()).readPage(pid);
-            newpage.markDirty(false,tid);
             theBufferPool.put(pid, newpage);
-            //maxNumPages--;
             return newpage;
         }
     }
@@ -97,9 +101,10 @@ public class BufferPool {
      * @param tid the ID of the transaction requesting the unlock
      * @param pid the ID of the page to unlock
      */
-    public  void releasePage(TransactionId tid, PageId pid) {
-        // some code goes here
-        // not necessary for proj1
+    public void releasePage(TransactionId tid, PageId pid) {
+        //System.out.println("releasing page " + pid.pageNumber() + " by " + tid.getId());
+        this.manager.removeReadLock(tid, pid);
+        this.manager.removewriteLock(tid, pid);
     }
 
     /**
@@ -108,15 +113,12 @@ public class BufferPool {
      * @param tid the ID of the transaction requesting the unlock
      */
     public void transactionComplete(TransactionId tid) throws IOException {
-        // some code goes here
-        // not necessary for proj1
+        this.transactionComplete(tid, true);
     }
 
     /** Return true if the specified transaction has a lock on the specified page */
-    public boolean holdsLock(TransactionId tid, PageId p) {
-        // some code goes here
-        // not necessary for proj1
-        return false;
+    public boolean holdsLock(TransactionId tid, PageId pid) {
+        return (this.manager.holdsReadLock(tid, pid) || this.manager.holdsWriteLock(tid, pid));
     }
 
     /**
@@ -128,8 +130,27 @@ public class BufferPool {
      */
     public void transactionComplete(TransactionId tid, boolean commit)
         throws IOException {
-        // some code goes here
-        // not necessary for proj1
+
+        if(commit)
+           flushPages(tid);
+        else {
+            Iterator<Page> theIterator = this.theBufferPool.values().iterator();
+            while(theIterator.hasNext()) {
+                Page page = theIterator.next();
+                PageId pid = page.getId();
+
+                if(page.isDirty() == tid)
+                    this.theBufferPool.put(pid, page.getBeforeImage());
+           }
+        }
+
+        Iterator<Page> theIterator = this.theBufferPool.values().iterator();
+        while(theIterator.hasNext()) {
+            Page page = theIterator.next();
+            PageId pid = page.getId();
+            if(manager.holdsReadLock(tid,pid) || manager.holdsWriteLock(tid, pid))
+                releasePage(tid, page.getId());
+        }
     }
 
     /**
@@ -147,9 +168,16 @@ public class BufferPool {
      * @param t the tuple to add
      */
     public void insertTuple(TransactionId tid, int tableId, Tuple t)
-        throws DbException, IOException, TransactionAbortedException {
+        throws DbException, IOException, TransactionAbortedException, InterruptedException {
+
         DbFile file = Database.getCatalog().getDbFile(tableId);
-        file.insertTuple(tid, t);
+        ArrayList<Page> pagesList = file.insertTuple(tid, t);
+
+        for(int i=0; i<pagesList.size(); i++) {
+            Page page = pagesList.get(i);
+            page.markDirty(true,tid);
+            this.theBufferPool.put(page.getId(),page);
+        }
     }
 
     /**
@@ -166,11 +194,12 @@ public class BufferPool {
      * @param t the tuple to add
      */
     public  void deleteTuple(TransactionId tid, Tuple t)
-        throws DbException, TransactionAbortedException, IOException {
+        throws DbException, TransactionAbortedException, IOException, InterruptedException {
 
         int tableId = t.getRecordId().getPageId().getTableId();
         DbFile file = Database.getCatalog().getDbFile(tableId);
-        file.deleteTuple(tid, t);
+        Page page = file.deleteTuple(tid, t);
+        page.markDirty(true,tid);
     }
 
     /**
@@ -179,9 +208,18 @@ public class BufferPool {
      *     break simpledb if running in NO STEAL mode.
      */
     public synchronized void flushAllPages() throws IOException {
-        Iterator<PageId> theIterator = theBufferPool.keySet().iterator();
-        while(theIterator.hasNext())
-            flushPage(theIterator.next());
+        Iterator<Page> theIterator = this.theBufferPool.values().iterator();
+
+        while(theIterator.hasNext()) {
+            Page page = theIterator.next();
+            PageId pid = page.getId();
+            DbFile file = Database.getCatalog().getDbFile(pid.getTableId());
+
+            if (page.isDirty() != null) {
+                page.markDirty(false, page.isDirty());
+                file.writePage(page);
+            }
+        }
     }
 
     /** Remove the specific page id from the buffer pool.
@@ -197,28 +235,33 @@ public class BufferPool {
      * Flushes a certain page to disk
      * @param pid an ID indicating the page to flush
      */
-    private synchronized  void flushPage(PageId pid) throws IOException {
+    private synchronized void flushPage(PageId pid) throws IOException {
         DbFile file = Database.getCatalog().getDbFile(pid.getTableId());
-        Page page = file.readPage(pid);
+        Page page = this.theBufferPool.get(pid);
 
-        if (page.isDirty() != null) {
-            page.markDirty(false, page.isDirty());
-            file.writePage(page);
-        }
+        page.markDirty(false, page.isDirty());
+        file.writePage(page);
     }
 
     /** Write all pages of the specified transaction to disk.
      */
-    public synchronized  void flushPages(TransactionId tid) throws IOException {
-        // some code goes here
-        // not necessary for proj1
+    public synchronized void flushPages(TransactionId tid) throws IOException {
+        Iterator<Page> theIterator = this.theBufferPool.values().iterator();
+
+        while(theIterator.hasNext()) {
+            Page page = theIterator.next();
+            PageId pid = page.getId();
+
+            if(page.isDirty() == tid)
+                flushPage(pid);
+        }
     }
 
     /**
      * Discards a page from the buffer pool.
      * Flushes the page to disk to ensure dirty pages are updated on disk.
      */
-    private synchronized  void evictPage() throws DbException {
+    private synchronized void evictPage() throws DbException {
         // some code goes here
         // not necessary for proj1
     }

@@ -11,7 +11,7 @@ public class DeleteTest extends FilterBase {
 
     @Override
     protected int applyPredicate(HeapFile table, TransactionId tid, Predicate predicate)
-            throws DbException, TransactionAbortedException, IOException {
+            throws DbException, TransactionAbortedException, IOException, InterruptedException {
         //System.out.println();
         //System.out.println("applying pred: " + predicate.toString());
         SeqScan ss = new SeqScan(tid, table.getId(), "");
@@ -50,7 +50,7 @@ public class DeleteTest extends FilterBase {
 
     @Override
     protected void validateAfter(HeapFile table)
-            throws DbException, TransactionAbortedException, IOException {
+            throws DbException, TransactionAbortedException, IOException, InterruptedException {
         // As part of a different transaction, scan the table
         SystemTestUtil.matchTuples(table, expectedTuples);
     }
