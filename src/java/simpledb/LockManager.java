@@ -11,7 +11,7 @@ public class LockManager {
     private ConcurrentHashMap<TransactionId, ArrayList<PageId>> locks;
     private ConcurrentHashMap<TransactionId, Timestamp> startTimes;
     private static final int TIMEOUT = 100;
-    private static final long TRANSACTION_TIME = 100;
+    private static final long TRANSACTION_TIME = 2000;
 
     public LockManager() {
         writeMap = new ConcurrentHashMap<PageId, TransactionId>();
@@ -29,8 +29,10 @@ public class LockManager {
 	    long currentTime = now.getTime();
 	    if (currentTime - startTime > TRANSACTION_TIME) {
 		if (locks.containsKey(tid)) {
-		    ArrayList<PageId> pages = locks.get(tid);
-		    for (PageId pid : pages) {
+		    ArrayList<PageId> pageArray = locks.get(tid);
+		    Object[] pages = pageArray.toArray();
+		    for (int i = 0; i < pages.length; i++) {
+			PageId pid = (PageId) pages[i];
 			Database.getBufferPool().releasePage(tid, pid);
 		    }
 		}
