@@ -69,8 +69,8 @@ public class LockManager {
                             PageId processId = (PageId) pagesArray[i];
                             Database.getBufferPool().releasePage(tid, processId);
                         }
-                        throw new TransactionAbortedException();
                     }
+                    throw new TransactionAbortedException();
                 }
                 counters.put(tid, new Integer(count));
             } else {
