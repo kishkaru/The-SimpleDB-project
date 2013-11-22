@@ -37,20 +37,23 @@ public class BufferPool {
             maxNumPages = numPages;
             this.theBufferPool = Collections.synchronizedMap(new LinkedHashMap<PageId, Page>(maxNumPages+1, 0.75F, true) {
                 public boolean removeEldestEntry(Map.Entry oldest) {
-                    boolean removeOldest = this.size() > maxNumPages;
+                    //PROBLEM: This method is invoked by put AFTER inserting a new entry into the map.
 
-                    if (((Page) oldest.getValue()).isDirty() != null)
-                        removeOldest = false;
+                    boolean removeOldest = this.size() > maxNumPages;   //we inserted +1 more than max?
 
-                    else if (removeOldest) {
+                    if (((Page) oldest.getValue()).isDirty() != null)  //if the oldest IS dirty...
+                        //throw new DbException("buffer full");
+                        removeOldest = false;                          //dont remove it.
+
+                    else if (removeOldest) {                           //if the oldest is NOT dirty, and we must remove...
                         try {
-                            flushPage((PageId) oldest.getKey());
+                            flushPage((PageId) oldest.getKey());       //remove the oldest
                         } catch (IOException e) {
                             System.err.println(e);
                         }
                     }
 
-                    return removeOldest;
+                    return removeOldest;                              //tells the linkedlist whether to remove the oldest
                 }
             });
             manager = new LockManager();
@@ -266,8 +269,7 @@ public class BufferPool {
      * Flushes the page to disk to ensure dirty pages are updated on disk.
      */
     private synchronized void evictPage() throws DbException {
-        // some code goes here
-        // not necessary for proj1
+        //need to evict page whenever: get() or put()
     }
 
 }
