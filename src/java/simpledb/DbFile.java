@@ -17,7 +17,7 @@ public interface DbFile extends Serializable {
      *
      * @throws IllegalArgumentException if the page does not exist in this file.
      */
-    public Page readPage(PageId id) throws FileNotFoundException, IOException ;
+    public Page readPage(PageId id);
 
     /**
      * Push the specified page to disk.
@@ -41,7 +41,7 @@ public interface DbFile extends Serializable {
      * @throws IOException if the needed file can't be read/written
      */
     public ArrayList<Page> insertTuple(TransactionId tid, Tuple t)
-        throws DbException, IOException, TransactionAbortedException, InterruptedException;
+        throws DbException, IOException, TransactionAbortedException;
 
     /**
      * Removes the specifed tuple from the file on behalf of the specified
@@ -53,7 +53,7 @@ public interface DbFile extends Serializable {
      *   of the file
      */
     public Page deleteTuple(TransactionId tid, Tuple t)
-        throws DbException, TransactionAbortedException, IOException, InterruptedException;
+        throws DbException, TransactionAbortedException;
 
     /**
      * Returns an iterator over all the tuples stored in this DbFile. The
@@ -62,7 +62,7 @@ public interface DbFile extends Serializable {
      *
      * @return an iterator over all the tuples stored in this DbFile.
      */
-    public DbFileIterator iterator(TransactionId tid) throws IOException, DbException, TransactionAbortedException ;
+    public DbFileIterator iterator(TransactionId tid);
 
     /**
      * Returns a unique ID used to identify this DbFile in the Catalog. This id

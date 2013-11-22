@@ -73,7 +73,7 @@ public class BufferPool {
      * @param perm the requested permissions on the page
      */
     public Page getPage(TransactionId tid, PageId pid, Permissions perm)
-        throws TransactionAbortedException, DbException, IOException, InterruptedException{
+        throws TransactionAbortedException, DbException {
 
         if(perm == Permissions.READ_WRITE)
             this.manager.addWriteLock(tid, pid);
@@ -168,15 +168,19 @@ public class BufferPool {
      * @param t the tuple to add
      */
     public void insertTuple(TransactionId tid, int tableId, Tuple t)
-        throws DbException, IOException, TransactionAbortedException, InterruptedException {
+        throws DbException, TransactionAbortedException {
 
         DbFile file = Database.getCatalog().getDbFile(tableId);
-        ArrayList<Page> pagesList = file.insertTuple(tid, t);
+        try {
+            ArrayList<Page> pagesList = file.insertTuple(tid, t);
 
-        for(int i=0; i<pagesList.size(); i++) {
-            Page page = pagesList.get(i);
-            page.markDirty(true,tid);
-            this.theBufferPool.put(page.getId(),page);
+            for(int i=0; i<pagesList.size(); i++) {
+                Page page = pagesList.get(i);
+                page.markDirty(true,tid);
+                this.theBufferPool.put(page.getId(),page);
+            }
+        } catch(IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -194,7 +198,7 @@ public class BufferPool {
      * @param t the tuple to add
      */
     public  void deleteTuple(TransactionId tid, Tuple t)
-        throws DbException, TransactionAbortedException, IOException, InterruptedException {
+        throws DbException, TransactionAbortedException {
 
         int tableId = t.getRecordId().getPageId().getTableId();
         DbFile file = Database.getCatalog().getDbFile(tableId);

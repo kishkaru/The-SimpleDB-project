@@ -17,7 +17,7 @@ public class HeapIterator implements DbFileIterator {
     }
 
     public void open()
-            throws DbException, TransactionAbortedException, IOException, InterruptedException {
+            throws DbException, TransactionAbortedException {
         pageNo = 0;
 
         int i = findNextIteratorIndex(0);
@@ -34,7 +34,7 @@ public class HeapIterator implements DbFileIterator {
     }
 
     public boolean hasNext()
-            throws DbException, TransactionAbortedException, IOException, InterruptedException {
+            throws DbException, TransactionAbortedException {
         boolean result = false;
 
         if (!opened)
@@ -56,14 +56,14 @@ public class HeapIterator implements DbFileIterator {
     }
 
     private Iterator<Tuple> getIteratorAtIndex(int i)
-            throws DbException, TransactionAbortedException, NoSuchElementException, IOException, InterruptedException {
+            throws DbException, TransactionAbortedException, NoSuchElementException {
 
         HeapPage currentPage = (HeapPage) Database.getBufferPool().getPage(tid, new HeapPageId(this.id, i), Permissions.READ_WRITE );
         return currentPage.iterator();
     }
 
     private int findNextIteratorIndex(int i)
-            throws DbException, TransactionAbortedException, NoSuchElementException, IOException, InterruptedException {
+            throws DbException, TransactionAbortedException, NoSuchElementException {
         for(; i < numPages; i++) {
             if(getIteratorAtIndex(i).hasNext())
                 return i;
@@ -73,7 +73,7 @@ public class HeapIterator implements DbFileIterator {
     }
 
     public Tuple next()
-            throws DbException, TransactionAbortedException, NoSuchElementException, IOException, InterruptedException {
+            throws DbException, TransactionAbortedException, NoSuchElementException {
 
         if (!opened || pageIt == null || pageNo >= numPages)
             throw new NoSuchElementException();
@@ -92,7 +92,7 @@ public class HeapIterator implements DbFileIterator {
         }
     }
 
-    public void rewind() throws DbException, TransactionAbortedException, IOException, InterruptedException {
+    public void rewind() throws DbException, TransactionAbortedException {
         close();
         open();
     }

@@ -83,7 +83,7 @@ public class TableStatsTest extends SimpleDbTestBase {
 		Assert.assertEquals(ret[0], Boolean.FALSE);
 		ret = SystemTestUtil.checkQuadratic(stats);
 		Assert.assertEquals(ret[0], Boolean.TRUE);
-
+		
 	}
 	
 	/**
@@ -91,10 +91,10 @@ public class TableStatsTest extends SimpleDbTestBase {
 	 */
 	@Test public void estimateTableCardinalityTest() {
 		TableStats s = new TableStats(this.tableId, IO_COST);
-
+		
 		// Try a random selectivity
 		Assert.assertEquals(306, s.estimateTableCardinality(0.3));
-
+		
 		// Make sure we get all rows with 100% selectivity, and none with 0%
 		Assert.assertEquals(1020, s.estimateTableCardinality(1.0));
 		Assert.assertEquals(0, s.estimateTableCardinality(0.0));
@@ -116,9 +116,9 @@ public class TableStatsTest extends SimpleDbTestBase {
 		final Field belowMin = new IntField(-10);
 		
 		TableStats s = new TableStats(this.tableId, IO_COST);
-
+		
 		for (int col = 0; col < 10; col++) {
-			Assert.assertEquals(0.0, s.estimateSelectivity(col, Predicate.Op.EQUALS, aboveMax), 0.001);
+			Assert.assertEquals(0.0, s.estimateSelectivity(col, Predicate.Op.EQUALS, aboveMax), 0.001);			
 			Assert.assertEquals(1.0/32.0, s.estimateSelectivity(col, Predicate.Op.EQUALS, halfMaxMin), 0.015);
 			Assert.assertEquals(0, s.estimateSelectivity(col, Predicate.Op.EQUALS, belowMin), 0.001);
 
@@ -131,19 +131,19 @@ public class TableStatsTest extends SimpleDbTestBase {
 			Assert.assertEquals(0.5, s.estimateSelectivity(col, Predicate.Op.GREATER_THAN, halfMaxMin), 0.1);
 			Assert.assertEquals(31.0/32.0, s.estimateSelectivity(col, Predicate.Op.GREATER_THAN, atMin), 0.05);
 			Assert.assertEquals(1.0, s.estimateSelectivity(col, Predicate.Op.GREATER_THAN, belowMin), 0.001);
-
+			
 			Assert.assertEquals(1.0, s.estimateSelectivity(col, Predicate.Op.LESS_THAN, aboveMax), 0.001);
 			Assert.assertEquals(1.0, s.estimateSelectivity(col, Predicate.Op.LESS_THAN, atMax), 0.015);
 			Assert.assertEquals(0.5, s.estimateSelectivity(col, Predicate.Op.LESS_THAN, halfMaxMin), 0.1);
 			Assert.assertEquals(0.0, s.estimateSelectivity(col, Predicate.Op.LESS_THAN, atMin), 0.001);
 			Assert.assertEquals(0.0, s.estimateSelectivity(col, Predicate.Op.LESS_THAN, belowMin), 0.001);
-
+			
 			Assert.assertEquals(0.0, s.estimateSelectivity(col, Predicate.Op.GREATER_THAN_OR_EQ, aboveMax), 0.001);
 			Assert.assertEquals(0.0, s.estimateSelectivity(col, Predicate.Op.GREATER_THAN_OR_EQ, atMax), 0.015);
 			Assert.assertEquals(0.5, s.estimateSelectivity(col, Predicate.Op.GREATER_THAN_OR_EQ, halfMaxMin), 0.1);
 			Assert.assertEquals(1.0, s.estimateSelectivity(col, Predicate.Op.GREATER_THAN_OR_EQ, atMin), 0.015);
 			Assert.assertEquals(1.0, s.estimateSelectivity(col, Predicate.Op.GREATER_THAN_OR_EQ, belowMin), 0.001);
-
+			
 			Assert.assertEquals(1.0, s.estimateSelectivity(col, Predicate.Op.LESS_THAN_OR_EQ, aboveMax), 0.001);
 			Assert.assertEquals(1.0, s.estimateSelectivity(col, Predicate.Op.LESS_THAN_OR_EQ, atMax), 0.015);
 			Assert.assertEquals(0.5, s.estimateSelectivity(col, Predicate.Op.LESS_THAN_OR_EQ, halfMaxMin), 0.1);

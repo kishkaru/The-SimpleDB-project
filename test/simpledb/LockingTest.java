@@ -22,7 +22,6 @@ public class LockingTest extends TestUtil.CreateHeapFile {
   @Before public void setUp() throws Exception {
     super.setUp();
 
-
     // clear all state from the buffer pool
     bp = Database.resetBufferPool(BufferPool.DEFAULT_PAGES);
 
@@ -86,16 +85,15 @@ public class LockingTest extends TestUtil.CreateHeapFile {
       boolean expected) throws Exception {
 
     TestUtil.LockGrabber t = new TestUtil.LockGrabber(tid, pid, perm);
-      t.start();
+    t.start();
 
     // if we don't have the lock after TIMEOUT, we assume blocking.
     Thread.sleep(TIMEOUT);
     assertEquals(expected, t.acquired());
-      assertNull(t.getError());
+    assertNull(t.getError());
 
     // TODO(ghuo): yes, stop() is evil, but this is unit test cleanup
-
-      t.stop();
+    t.stop();
   }
 
   /**
@@ -103,7 +101,7 @@ public class LockingTest extends TestUtil.CreateHeapFile {
    * Acquires two read locks on the same page.
    */
   @Test public void acquireReadLocksOnSamePage() throws Exception {
-      metaLockTester(tid1, p0, Permissions.READ_ONLY,
+    metaLockTester(tid1, p0, Permissions.READ_ONLY,
                    tid2, p0, Permissions.READ_ONLY, true);
   }
 
@@ -112,10 +110,7 @@ public class LockingTest extends TestUtil.CreateHeapFile {
    * Acquires a read lock and a write lock on the same page, in that order.
    */
   @Test public void acquireReadWriteLocksOnSamePage() throws Exception {
-      //System.out.println("starting test");
-      //System.out.flush();
-
-      metaLockTester(tid1, p0, Permissions.READ_ONLY,
+    metaLockTester(tid1, p0, Permissions.READ_ONLY,
                    tid2, p0, Permissions.READ_WRITE, false);
   }
 

@@ -93,7 +93,7 @@ public class Aggregate extends Operator {
 	    return aop.toString();
     }
     
-    public void open() throws IOException, NoSuchElementException, DbException, TransactionAbortedException, InterruptedException {
+    public void open() throws NoSuchElementException, DbException, TransactionAbortedException {
 	    Type aggType = this.input.getTupleDesc().getFieldType(this.afield);
         Type groupByType = null;
         if (this.groupField() != Aggregator.NO_GROUPING)
@@ -126,7 +126,7 @@ public class Aggregate extends Operator {
      * the result tuple should contain one field representing the result of the
      * aggregate. Should return null if there are no more tuples.
      */
-    protected Tuple fetchNext() throws IOException, TransactionAbortedException, DbException, InterruptedException {
+    protected Tuple fetchNext() throws TransactionAbortedException, DbException {
 	    Tuple tuple = null;
 	    if (this.aggregator.hasNext())
 	    	tuple = this.aggregator.next();
@@ -134,7 +134,7 @@ public class Aggregate extends Operator {
 	    return tuple;
     }
 
-    public void rewind() throws IOException, DbException, TransactionAbortedException, InterruptedException {
+    public void rewind() throws DbException, TransactionAbortedException {
 	    this.aggregator.rewind();
     }
 

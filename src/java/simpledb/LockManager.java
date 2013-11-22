@@ -20,7 +20,7 @@ public class LockManager {
 	    counters = new ConcurrentHashMap<TransactionId, Integer>();
     }
 
-    public synchronized void addReadLock(TransactionId tid, PageId pid) throws InterruptedException, TransactionAbortedException {
+    public synchronized void addReadLock(TransactionId tid, PageId pid) throws TransactionAbortedException {
 	    // adding pid to locks, unsure about placement
 	    ArrayList<PageId> pages = new ArrayList<PageId>();
         if (locks.containsKey(tid)) 
@@ -76,12 +76,17 @@ public class LockManager {
             } else {
                 counters.put(tid, new Integer(1));
             }
+
+            try {
             Thread.sleep(TIMEOUT);
+            } catch(InterruptedException e) {
+                e.printStackTrace();
+            }
         }
 
     }
 
-    public synchronized void addWriteLock(TransactionId tid, PageId pid) throws InterruptedException, TransactionAbortedException {
+    public synchronized void addWriteLock(TransactionId tid, PageId pid) throws TransactionAbortedException {
     	// adding pid to locks, unsure about placement
     	ArrayList<PageId> pages = new ArrayList<PageId>();
         if (locks.containsKey(tid)) 
@@ -121,7 +126,12 @@ public class LockManager {
                 } else {
                     counters.put(tid, new Integer(1));
                 }
-                Thread.sleep(TIMEOUT);
+
+                try {
+                    Thread.sleep(TIMEOUT);
+                } catch(InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }

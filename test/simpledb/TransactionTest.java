@@ -24,7 +24,6 @@ public class TransactionTest extends TestUtil.CreateHeapFile {
 
     // create a new empty HeapFile and populate it with three pages.
     // we should be able to add 512 tuples on an empty page.
-
     TransactionId tid = new TransactionId();
     for (int i = 0; i < 1025; ++i) {
       empty.insertTuple(tid, Utility.getHeapTuple(i, 2));
@@ -46,7 +45,6 @@ public class TransactionTest extends TestUtil.CreateHeapFile {
     bp.getPage(tid, p2, Permissions.READ_WRITE).markDirty(true, tid);
     bp.flushAllPages();
     bp = Database.resetBufferPool(BufferPool.DEFAULT_PAGES);
-
   }
 
   /**
@@ -59,9 +57,7 @@ public class TransactionTest extends TestUtil.CreateHeapFile {
     bp.getPage(tid1, p1, Permissions.READ_WRITE);
     bp.transactionComplete(tid1, true);
 
-//      throw new RuntimeException("ERROR");
     bp.getPage(tid2, p0, Permissions.READ_WRITE);
-//
     bp.getPage(tid2, p0, Permissions.READ_WRITE);
   }
 
@@ -105,7 +101,6 @@ public class TransactionTest extends TestUtil.CreateHeapFile {
    * Verify that a tuple inserted during a committed transaction is durable
    */
   @Test public void commitTransaction() throws Exception {
-//      throw new RuntimeException("ERROR");
     testTransactionComplete(true);
   }
 
@@ -114,7 +109,6 @@ public class TransactionTest extends TestUtil.CreateHeapFile {
    * Verify that a tuple inserted during a committed transaction is durable
    */
   @Test public void abortTransaction() throws Exception {
-//      throw new RuntimeException("ERROR");
     testTransactionComplete(false);
   }
 
