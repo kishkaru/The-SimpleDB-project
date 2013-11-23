@@ -7,7 +7,7 @@ import simpledb.*;
 public class FilterTest extends FilterBase {
     @Override
     protected int applyPredicate(HeapFile table, TransactionId tid, Predicate predicate)
-            throws DbException, TransactionAbortedException, IOException, InterruptedException {
+            throws DbException, TransactionAbortedException, IOException {
         SeqScan ss = new SeqScan(tid, table.getId(), "");
         Filter filter = new Filter(predicate, ss);
         filter.open();

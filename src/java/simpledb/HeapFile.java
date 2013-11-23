@@ -98,7 +98,7 @@ public class HeapFile implements DbFile {
     }
 
     public ArrayList<Page> insertTuple(TransactionId tid, Tuple t)
-            throws DbException, IOException, TransactionAbortedException, InterruptedException {
+            throws DbException,TransactionAbortedException {
         ArrayList<Page> pageList = new ArrayList<Page>();
 
         for(int i = 0; i < numPages(); i++) {
@@ -115,23 +115,27 @@ public class HeapFile implements DbFile {
         
         //long initPages = numPages();
         HeapPageId pid = new HeapPageId(getId(), numPages());
-        HeapPage page = new HeapPage(pid, HeapPage.createEmptyPageData());
+        try {
+            HeapPage page = new HeapPage(pid, HeapPage.createEmptyPageData());
+            FileOutputStream file = new FileOutputStream(f, true);
+            file.write(page.getPageData());
+            file.close();
 
-        FileOutputStream file = new FileOutputStream(f, true);
-        file.write(page.getPageData());
-        file.close();
-
-        page = (HeapPage) Database.getBufferPool().getPage(
-                tid, pid, Permissions.READ_WRITE);
-        page.insertTuple(t);
-        pageList.add(page);
+            page = (HeapPage) Database.getBufferPool().getPage(
+                    tid, pid, Permissions.READ_WRITE);
+            page.insertTuple(t);
+            pageList.add(page);
+        }
+        catch(IOException e) {
+            e.printStackTrace();
+        }
 
         //assert numPages() > initPages;
         return pageList;
     }
 
     public Page deleteTuple(TransactionId tid, Tuple t) throws DbException,
-            TransactionAbortedException, IOException, InterruptedException {
+            TransactionAbortedException {
 
         PageId pid = t.getRecordId().getPageId();
         HeapPage page = (HeapPage) Database.getBufferPool().getPage(

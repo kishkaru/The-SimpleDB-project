@@ -107,7 +107,7 @@ public class TestUtil {
      * If not, throw an assertion.
      */
     public static void compareDbIterators(DbIterator expected, DbIterator actual)
-            throws DbException, TransactionAbortedException, IOException, InterruptedException {
+            throws DbException, TransactionAbortedException {
         while (expected.hasNext()) {
             assertTrue(actual.hasNext());
 
@@ -126,7 +126,7 @@ public class TestUtil {
      * If not, throw an assertion.
      */
     public static void matchAllTuples(DbIterator expected, DbIterator actual) throws
-            DbException, TransactionAbortedException, IOException, InterruptedException {
+            DbException, TransactionAbortedException {
         // TODO(ghuo): this n^2 set comparison is kind of dumb, but we haven't
         // implemented hashCode or equals for tuples.
         boolean matched = false;
@@ -153,7 +153,7 @@ public class TestUtil {
      * Verifies that the DbIterator has been exhausted of all elements.
      */
     public static boolean checkExhausted(DbIterator it)
-        throws TransactionAbortedException, DbException, IOException, InterruptedException {
+        throws TransactionAbortedException, DbException {
 
         if (it.hasNext()) return false;
 

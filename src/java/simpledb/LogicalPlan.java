@@ -287,7 +287,7 @@ public class LogicalPlan {
      *  @return A DbIterator representing this plan.
      */ 
     public DbIterator physicalPlan(TransactionId t, Map<String,TableStats> baseTableStats, boolean explain)
-            throws ParsingException, IOException, FileNotFoundException, DbException, TransactionAbortedException {
+            throws ParsingException, IOException, FileNotFoundException {
         Iterator<LogicalScanNode> tableIt = tables.iterator();
         HashMap<String,String> equivMap = new HashMap<String,String>();
         HashMap<String,Double> filterSelectivities = new HashMap<String, Double>();

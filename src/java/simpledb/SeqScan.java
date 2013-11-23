@@ -35,8 +35,7 @@ public class SeqScan implements DbIterator {
      *            are, but the resulting name can be null.fieldName,
      *            tableAlias.null, or null.null).
      */
-    public SeqScan(TransactionId tid, int tableid, String tableAlias)
-            throws IOException, FileNotFoundException, DbException, TransactionAbortedException {
+    public SeqScan(TransactionId tid, int tableid, String tableAlias) {
         this.tableid = tableid;
         this.tableAlias = tableAlias;
         this.dbFile = null;
@@ -85,7 +84,7 @@ public class SeqScan implements DbIterator {
         this(tid, tableid, Database.getCatalog().getTableName(tableid));
     }
 
-    public void open() throws DbException, TransactionAbortedException, IOException, InterruptedException {
+    public void open() throws DbException, TransactionAbortedException {
         it.open();
     }
 
@@ -121,12 +120,12 @@ public class SeqScan implements DbIterator {
         return (string == null) ? "null" : string;
     }
 
-    public boolean hasNext() throws TransactionAbortedException, DbException, IOException, InterruptedException {
+    public boolean hasNext() throws TransactionAbortedException, DbException {
         return it.hasNext();
     }
 
     public Tuple next() throws NoSuchElementException,
-            TransactionAbortedException, DbException, IOException, InterruptedException {
+            TransactionAbortedException, DbException {
         return it.next();
     }
 
@@ -135,7 +134,7 @@ public class SeqScan implements DbIterator {
     }
 
     public void rewind() throws DbException, NoSuchElementException,
-            TransactionAbortedException, IOException, InterruptedException {
+            TransactionAbortedException {
         it.rewind();
     }
 }

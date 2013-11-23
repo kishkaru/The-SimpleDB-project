@@ -36,7 +36,7 @@ public class Parser {
     }
 
     void processExpression(TransactionId tid, ZExpression wx, LogicalPlan lp)
-            throws simpledb.ParsingException, DbException, TransactionAbortedException {
+            throws simpledb.ParsingException {
         if (wx.getOperator().equals("AND")) {
             for (int i = 0; i < wx.nbOperands(); i++) {
                 if (!(wx.getOperand(i) instanceof ZExpression)) {
@@ -133,7 +133,7 @@ public class Parser {
     }
 
     public LogicalPlan parseQueryLogicalPlan(TransactionId tid, ZQuery q)
-            throws IOException, Zql.ParseException, simpledb.ParsingException, DbException, TransactionAbortedException {
+            throws IOException, Zql.ParseException, simpledb.ParsingException {
         @SuppressWarnings("unchecked")
         Vector<ZFromItem> from = q.getFrom();
         LogicalPlan lp = new LogicalPlan();
@@ -465,7 +465,7 @@ public class Parser {
     }
 
     public LogicalPlan generateLogicalPlan(TransactionId tid, String s)
-            throws simpledb.ParsingException, DbException, TransactionAbortedException {
+            throws simpledb.ParsingException {
         ByteArrayInputStream bis = new ByteArrayInputStream(s.getBytes());
         ZqlParser p = new ZqlParser(bis);
         try {
