@@ -70,7 +70,10 @@ public class LockManager {
                             Database.getBufferPool().releasePage(tid, processId);
                         }
                     }
-                    throw new TransactionAbortedException();
+                    if (Thread.activeCount() > 1)
+                        throw new TransactionAbortedException();
+                    else
+                        break;
                 }
                 counters.put(tid, new Integer(count));
             } else {
@@ -120,7 +123,11 @@ public class LockManager {
                                 Database.getBufferPool().releasePage(tid, processId);
                             }
                         }
-                        throw new TransactionAbortedException();
+                        //break;
+                        if (Thread.activeCount() > 1)
+                            throw new TransactionAbortedException();
+                        else
+                            break;
                     }
                     counters.put(tid, new Integer(count));
                 } else {
