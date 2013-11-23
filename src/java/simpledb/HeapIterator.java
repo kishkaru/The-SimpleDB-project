@@ -59,7 +59,8 @@ public class HeapIterator implements DbFileIterator {
             throws DbException, TransactionAbortedException, NoSuchElementException {
 
         HeapPage currentPage = (HeapPage) Database.getBufferPool().getPage(tid, new HeapPageId(this.id, i), Permissions.READ_WRITE );
-        return currentPage.iterator();
+        Database.getBufferPool().releasePage(tid, currentPage.getId());
+        return currentPage. iterator();
     }
 
     private int findNextIteratorIndex(int i)

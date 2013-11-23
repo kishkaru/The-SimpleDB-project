@@ -21,7 +21,6 @@ public class LockManager {
     }
 
     public synchronized void addReadLock(TransactionId tid, PageId pid) throws TransactionAbortedException {
-	    // adding pid to locks, unsure about placement
 	    ArrayList<PageId> pages = new ArrayList<PageId>();
         if (locks.containsKey(tid)) 
 	       pages = locks.get(tid);
@@ -90,7 +89,6 @@ public class LockManager {
     }
 
     public synchronized void addWriteLock(TransactionId tid, PageId pid) throws TransactionAbortedException {
-    	// adding pid to locks, unsure about placement
     	ArrayList<PageId> pages = new ArrayList<PageId>();
         if (locks.containsKey(tid)) 
     	    pages = locks.get(tid);
@@ -123,7 +121,6 @@ public class LockManager {
                                 Database.getBufferPool().releasePage(tid, processId);
                             }
                         }
-                        //break;
                         if (Thread.activeCount() > 1)
                             throw new TransactionAbortedException();
                         else
