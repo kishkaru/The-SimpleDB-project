@@ -12,25 +12,21 @@ public class BufferPoolHelper {
 
     public BufferPoolHelper(int numPages) {
         maxPages = numPages;
-        //System.out.println(numPages);
         map = new ConcurrentHashMap<PageId, Page>();
         list = new ArrayList<PageId>();
     }
 
     public void put(PageId pid, Page page) throws DbException{
         boolean done = false;
-        //System.out.println("list size: " + list.size());
         if (list.size() < maxPages)    {
             if (list.contains(pid)) {
                 list.remove(pid);
                 list.add(pid);
-                //System.out.println("removed+add1: " + pid.toString());
                 map.put(pid, page);
                 done = true;
             }
             else {
                 list.add(pid);
-                //System.out.println("added1: " + pid.toString());
                 map.put(pid, page);
                 done = true;
             }
@@ -39,32 +35,23 @@ public class BufferPoolHelper {
             if (list.contains(pid)) {
                 list.remove(pid);
                 list.add(pid);
-                //System.out.println("removed+add2: " + pid.toString());
                 map.put(pid, page);
                 done = true;
             }
             else {
-            for (int i = 0; i < list.size(); i++) {
-                PageId id = list.get(i);
-                Page pg = map.get(id);
-                //System.out.println("dirty: " + id.toString() + " " + pg.isDirty());
-
-                //System.out.println("LIST: ");
-                //for(int ii =0; ii<list.size(); ii++)
-                //    System.out.println(list.get(ii));
-                //System.out.println("END");
-
-
-                if (pg.isDirty() == null) {
-                    this.remove(id);
-                    list.add(pid);
-                    map.put(pid, page);
-                    //System.out.println("added3: " + pid.toString());
-                    done = true;
-                    break;
+                for (int i = 0; i < list.size(); i++) {
+                    PageId id = list.get(i);
+                    Page pg = map.get(id);
+    
+                    if (pg.isDirty() == null) {
+                        this.remove(id);
+                        list.add(pid);
+                        map.put(pid, page);
+                        done = true;
+                        break;
+                    }
                 }
             }
-                }
         }
 
         if (!done) {
@@ -77,7 +64,6 @@ public class BufferPoolHelper {
             list.remove(pid);
             list.add(pid);
             Page page = map.get(pid);
-            //System.out.println("removed+add: " + pid.toString());
             return page;
         }
         else
@@ -86,9 +72,7 @@ public class BufferPoolHelper {
 
     public void remove(PageId pid) {
         boolean b = list.remove(pid);
-        //System.out.println(b);
         map.remove(pid);
-        //System.out.println("removed: " + pid.toString());
     }
 
     public Iterator<Page> iterator() {
