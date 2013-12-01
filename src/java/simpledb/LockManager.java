@@ -47,12 +47,10 @@ public class LockManager {
                     transList = new ArrayList<TransactionId>();
                     transList.add(tid);
                     readMap.put(pid, transList);
-                    //System.out.println("READ LOCK ADDED BY: " + tid.getId() );
                      break;
                 } else if(!transList.contains(tid)) {
                     transList.add(tid);
                     readMap.put(pid, transList);
-                    //System.out.println("READ LOCK ADDED BY: " + tid.getId() );
                     break;
                 } 
             }
@@ -149,7 +147,6 @@ public class LockManager {
         ArrayList<TransactionId> transList = readMap.get(pid);
         transList.remove(tid);
         readMap.put(pid, transList);
-        //System.out.println("READ LOCK REMOVED BY: " + tid.getId() );
     }
 
     public synchronized void removewriteLock(TransactionId tid, PageId pid) {
@@ -159,7 +156,6 @@ public class LockManager {
     	}
 
         writeMap.remove(pid);
-        //System.out.println("WRITE LOCK REMOVED BY: " + tid.getId() );
     }
 
     public boolean holdsReadLock(TransactionId tid, PageId pid) {
